@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Pure Showcase — Cómo está hecho</title>
+  <meta name="description" content="Documentación técnica del showcase de JavaScript puro: arquitectura, APIs usadas, accesibilidad, performance y más.">
+  <link rel="canonical" href="https://zhilius.github.io/js-pure-showcase/about.html">
+  <style>
+    :root {
+      --color-bg: #0f0f13;
+      --color-surface: #1a1a24;
+      --color-surface-hover: #252535;
+      --color-border: #2a2a3e;
+      --color-border-hover: #3a3a5e;
+      --color-text: #e4e4ec;
+      --color-text-secondary: #b0b0c8;
+      --color-purple: #534AB7;
+      --color-teal: #1D9E75;
+      --color-coral: #D85A30;
+      --color-link: #a78bfa;
+      --radius: 12px;
+      --focus-ring: 0 0 0 3px rgba(83, 74, 183, 0.6);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--color-bg); color: var(--color-text); line-height: 1.6;
+    }
+    a { color: var(--color-link); text-decoration: underline; }
+    a:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
+
+    header {
+      text-align: center; padding: 2.5rem 1rem 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    .back-link { font-size: 0.82rem; color: var(--color-text-secondary); margin-top: 0.5rem; }
+    .back-link a { color: var(--color-link); }
+
+    main { max-width: 740px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 1.05rem; font-weight: 700; color: var(--color-text);
+      margin-bottom: 0.8rem; padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    h3 {
+      font-size: 0.88rem; font-weight: 600; color: var(--color-purple);
+      margin: 1.2rem 0 0.4rem;
+    }
+    p { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.6rem; }
+    ul { list-style: none; padding: 0; }
+    li {
+      font-size: 0.85rem; color: var(--color-text-secondary);
+      padding: 0.3rem 0; padding-left: 1.2rem; position: relative;
+    }
+    li::before { content: "›"; position: absolute; left: 0; color: var(--color-purple); font-weight: 700; }
+    li strong { color: var(--color-text); }
+
+    pre {
+      background: #0a0a0e; border: 0.5px solid var(--color-border); border-radius: 8px;
+      padding: 0.8rem 1rem; font-size: 0.78rem; overflow-x: auto; margin: 0.5rem 0 1rem;
+      color: var(--color-teal); line-height: 1.5; tab-size: 2;
+    }
+    code { font-family: "SF Mono", Monaco, "Cascadia Code", monospace; }
+    p code, li code { background: #0a0a0e; padding: 1px 5px; border-radius: 4px; font-size: 0.78rem; color: var(--color-coral); }
+
+    .demo-card {
+      background: var(--color-surface); border: 0.5px solid var(--color-border); border-radius: var(--radius);
+      padding: 1rem 1.2rem; margin-bottom: 1rem;
+    }
+    .demo-card h3 { margin-top: 0; color: var(--color-text); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .demo-card .api-tag {
+      display: inline-block; font-size: 0.68rem; padding: 2px 8px;
+      border-radius: 4px; margin: 2px 3px 2px 0;
+      background: rgba(83, 74, 183, 0.2); color: var(--color-link);
+    }
+    .demo-card .api-tag.js-feat {
+      background: rgba(29, 158, 117, 0.2); color: var(--color-teal);
+    }
+
+    footer {
+      text-align: center; padding: 1.5rem 1rem;
+      font-size: 0.78rem; color: var(--color-text-secondary);
+      border-top: 1px solid var(--color-border);
+    }
+    footer a { color: var(--color-link); }
+
+    @media (max-width: 520px) {
+      header { padding: 1.5rem 1rem 1rem; }
+      header h1 { font-size: 1.2rem; }
+      main { padding: 1.5rem 1rem; }
+      pre { font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header role="banner">
+    <h1>Como esta hecho</h1>
+    <p class="back-link"><a href="index.html">← Volver al showcase</a></p>
+  </header>
+
+  <main role="main">
+
+    <section>
+      <h2>Arquitectura general</h2>
+      <p>Toda la aplicacion es un unico archivo <code>index.html</code> con CSS y JavaScript inline. Zero dependencias externas, zero frameworks, zero bundlers.</p>
+      <p>El codigo JS se organiza en una IIFE principal (<code>(function () { 'use strict'; ... })();</code>) que contiene IIFEs anidadas, una por demo. Cada una es autonoma: busca su canvas por <code>document.getElementById()</code> y si no existe, retorna silenciosamente.</p>
+      <pre>  (function () {
+    'use strict';
+
+    /* Helper compartido para canvas con soporte HiDPI */
+    function initCanvas(id, w, h) {
+      var cv = document.getElementById(id);
+      if (!cv) return null;
+      var dpr = window.devicePixelRatio || 1;
+      cv.width = w * dpr;
+      cv.height = h * dpr;
+      var ctx = cv.getContext('2d');
+      ctx.scale(dpr, dpr);
+      return { cv, ctx, w, h };
+    }
+
+    /* Cada demo vive en su propia IIFE */
+    (function () {
+      /* particulas */ ...
+    })();
+    (function () {
+      /* audio */ ...
+    })();
+    /* ... 13 demos en total */
+  })();</pre>
+    </section>
+
+    <section>
+      <h2>Las 13 demos y que ensenan</h2>
+
+      <div class="demo-card">
+        <h3>Particulas interactivas</h3>
+        <span class="api-tag">Canvas 2D</span>
+        <span class="api-tag">requestAnimationFrame</span>
+        <span class="api-tag">Mouse Events</span>
+        <span class="api-tag">Touch Events</span>
+        <p>80 particulas que se repelen del cursor y dibujan conexiones entre si cuando estan cerca. Usa <code>requestAnimationFrame</code> para el loop, <code>Math.sqrt</code> para distancias, y <code>getBoundingClientRect()</code> para coordenadas relativas al canvas. Soporta <code>touchmove</code> en dispositivos moviles.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Visualizador de audio</h3>
+        <span class="api-tag">Web Audio API</span>
+        <span class="api-tag">getUserMedia</span>
+        <span class="api-tag">AnalyserNode</span>
+        <span class="api-tag">OscillatorNode</span>
+        <p>Dos modos: (1) micrófono real via <code>getUserMedia({ audio: true })</code> conectado a un <code>AnalyserNode</code> que provee datos de frecuencia en un <code>Uint8Array</code>, y (2) sintetizador que genera 4 notas con <code>OscillatorNode</code> + <code>GainNode</code> para el ataque y decaimiento.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Bubble sort vs Quick sort</h3>
+        <span class="js-feat api-tag">Async/Await</span>
+        <span class="js-feat api-tag">Promises</span>
+        <span class="js-feat api-tag">Algoritmos</span>
+        <span class="api-tag">Canvas 2D</span>
+        <p>Visualizacion en vivo de dos algoritmos de ordenamiento. Usa <code>async/await</code> con <code>setTimeout</code> para controlar la velocidad. Cada paso pausa, redibuja el canvas, y continua. Quick sort implementa particion recursiva con <code>async</code>. El toggle entre algoritmos comparte el mismo arreglo de datos.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Simulacion de fisica</h3>
+        <span class="api-tag">Canvas 2D</span>
+        <span class="js-feat api-tag">Fisica clasica</span>
+        <p>Bolas con gravedad, rebote elastico, friccion y highlights especulares. Por-frame:<br><code>b.vy += grav; b.x += b.vx; b.y += b.vy;</code> con deteccion de colision contra bordes del canvas y coeficiente de restitucion variable (<code>e: 0.7 + Math.random() * 0.2</code>).</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Fractal de Mandelbrot</h3>
+        <span class="js-feat api-tag">Numeros complejos</span>
+        <span class="api-tag">ImageData</span>
+        <span class="api-tag">putImageData</span>
+        <p>Renderiza el conjunto de Mandelbrot iterando <code>z = z^2 + c</code> hasta 80 iteraciones por pixel. Usa <code>createImageData()</code> para manipular pixeles directamente via <code>Uint8ClampedArray</code>. Click para zoom (reduce viewport 35%). Los colores usan <code>Math.sqrt()</code> y <code>Math.pow()</code> para transiciones suaves.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Dibujo libre</h3>
+        <span class="api-tag">Canvas 2D</span>
+        <span class="api-tag">Mouse Events</span>
+        <span class="api-tag">Touch Events</span>
+        <p>Paint simple: <code>mousedown</code> inicia el trazo, <code>mousemove</code> dibuja con <code>lineTo()</code> + <code>stroke()</code>, <code>mouseup</code> corta. Integra <code>&lt;input type="color"&gt;</code> para el color y un slider para el grosor. Soporte completo táctil con <code>touchstart</code>/<code>touchmove</code>.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Matrix Rain</h3>
+        <span class="api-tag">Canvas 2D</span>
+        <span class="js-feat api-tag">Efecto visual</span>
+        <p>Columnas de caracteres katakana cayendo con efecto estela. Usa <code>fillStyle = 'rgba(15,15,19,0.06)'</code> sobre el canvas en vez de <code>clearRect</code> para crear el rastro progresivo. Cada columna tiene velocidad aleatoria y se reinicia al llegar al fondo.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Calculadora</h3>
+        <span class="js-feat api-tag">DOM Events</span>
+        <span class="js-feat api-tag">Logica de estados</span>
+        <p>Maquina de estados simple: cuatro operaciones, encadenamiento (<code>2 + 3 * 4 = 20</code>), manejo de division por cero, limite de 12 digitos, y formateo con <code>parseFloat().toFixed(10)</code> para evitar errores de punto flotante.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Reloj analogico</h3>
+        <span class="js-feat api-tag">Date API</span>
+        <span class="api-tag">Canvas transforms</span>
+        <p>Tres agujas (hora, minuto, segundo) dibujadas con <code>ctx.save()</code>/<code>ctx.translate()</code>/<code>ctx.rotate()</code> y <code>lineCap: 'round'</code>. La aguja de segundos es suave porque usa <code>getMilliseconds()</code> para interpolacion. Marcas de hora con diferente grosor para las horas principales.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Snake Game</h3>
+        <span class="js-feat api-tag">Game loop</span>
+        <span class="js-feat api-tag">Keyboard Events</span>
+        <span class="js-feat api-tag">Colision detection</span>
+        <p>Game loop clasico con <code>setTimeout</code> a 120ms. La serpiente se mueve por grid de 12px. Detecta colision contra paredes y contra si misma (<code>snake.some()</code>). Usa <code>e.preventDefault()</code> en <code>keydown</code> para evitar el scroll con flechas. Puntaje y estado de Game Over.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Editor de imagenes</h3>
+        <span class="api-tag">File API</span>
+        <span class="api-tag">Drag & Drop API</span>
+        <span class="js-feat api-tag">TypedArrays (Uint8ClampedArray)</span>
+        <span class="api-tag">ImageData</span>
+        <p>Carga imagenes via <code>FileReader.readAsDataURL()</code> o arrastrando con <code>dragenter</code>/<code>dragover</code>/<code>drop</code>. Aplica filtros manipulando el <code>Uint8ClampedArray</code> del <code>ImageData</code> pixel por pixel. Filtros: grayscale (<code>0.299R+0.587G+0.114B</code>), sepia (matriz 3x3), invert (<code>255 - v</code>), brillo (<code>+40</code>), blur (box blur 5x5).</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Web Speech</h3>
+        <span class="api-tag">SpeechRecognition API</span>
+        <span class="api-tag">SpeechSynthesis API</span>
+        <p>Reconocimiento de voz con <code>SpeechRecognition</code> (prefijo <code>webkit</code> incluido). Escucha en español argentino con resultados intermedios. Síntesis de voz con <code>SpeechSynthesisUtterance</code> configurado con <code>lang: 'es-AR'</code> y <code>rate: 0.9</code>.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Generators + Proxy</h3>
+        <span class="js-feat api-tag">function* / yield</span>
+        <span class="js-feat api-tag">Proxy / handler</span>
+        <span class="js-feat api-tag">Meta-programacion ES6</span>
+        <p>Generator infinito de Fibonacci con <code>function* fibonacciGen() { yield a; ... }</code>. Cada click avanza al siguiente numero. Un <code>Proxy</code> envuelve un objeto <code>data</code> con handlers <code>get</code>/<code>set</code> que registran cada acceso y se muestran en pantalla. Demostracion de lazy evaluation y meta-programacion.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Fetch API</h3>
+        <span class="js-feat api-tag">fetch()</span>
+        <span class="js-feat api-tag">Promises (then/catch)</span>
+        <span class="js-feat api-tag">JSON parsing</span>
+        <p>Consume la API <a href="https://jsonplaceholder.typicode.com/users">JSONPlaceholder</a> con <code>fetch()</code> y encadena <code>.then()</code>/<code>.catch()</code>. Renderiza dinamicamente 10 usuarios con nombre, email y compania. Maneja estados de carga (<code>disabled</code> + texto), error HTTP y error de red con mensajes en pantalla.</p>
+      </div>
+
+      <div class="demo-card">
+        <h3>Game of Life</h3>
+        <span class="js-feat api-tag">Automata celular</span>
+        <span class="api-tag">Canvas 2D</span>
+        <span class="api-tag">Uint8Array</span>
+        <p>Implementacion del Juego de la Vida de Conway. El tablero se almacena como arreglo de <code>Uint8Array</code> para eficiencia. Cada generacion computa 8 vecinos por celda con bordes toroidales (<code>(r + dr + ROWS) % ROWS</code>). Click para alternar celulas vivas/muertas, botones para pausar, aleatorizar y limpiar.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>SEO</h2>
+      <p>La pagina implementa las practicas recomendadas para motores de busqueda:</p>
+      <ul>
+        <li><strong>Meta tags</strong> — <code>description</code>, <code>keywords</code>, <code>author</code>, <code>viewport</code></li>
+        <li><strong>Open Graph</strong> — <code>og:title</code>, <code>og:description</code>, <code>og:type</code>, <code>og:url</code> para compartir en redes</li>
+        <li><strong>Twitter Cards</strong> — <code>twitter:card</code>, <code>twitter:title</code>, <code>twitter:description</code></li>
+        <li><strong>JSON-LD</strong> — Datos estructurados tipo <code>WebApplication</code> con Schema.org</li>
+        <li><strong>Canonical URL</strong> — Previene contenido duplicado</li>
+        <li><strong>robots.txt</strong> — Permite crawling completo</li>
+        <li><strong>sitemap.xml</strong> — Indice de paginas para buscadores</li>
+        <li><strong>HTML semantico</strong> — <code>&lt;header&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;footer&gt;</code>, <code>&lt;article&gt;</code>, <code>&lt;section&gt;</code></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Accesibilidad (a11y)</h2>
+      <ul>
+        <li><strong>Skip link</strong> — <code>&lt;a href="#main" class="skip-link"&gt;</code> para saltar la navegacion</li>
+        <li><strong>Landmarks</strong> — Roles ARIA: <code>banner</code>, <code>main</code>, <code>contentinfo</code></li>
+        <li><strong>Canvas accesibles</strong> — <code>role="img"</code> + <code>aria-label</code> descriptivo en cada canvas</li>
+        <li><strong>Estados ARIA</strong> — <code>aria-pressed</code> en botones toggle, <code>aria-live="polite"</code> en areas de estado dinamico, <code>role="status"</code></li>
+        <li><strong>Contraste de color</strong> — Texto principal <code>#e4e4ec</code> sobre <code>#0f0f13</code> (15.9:1), secundario <code>#b0b0c8</code> (5.8:1), links <code>#a78bfa</code> (7.5:1). WCAG AA en todos los elementos</li>
+        <li><strong>Focus visible</strong> — <code>:focus-visible</code> con anillo purpura en botones, inputs y enlaces</li>
+        <li><strong>Reduced motion</strong> — <code>@media (prefers-reduced-motion: reduce)</code> desactiva animaciones y transiciones</li>
+        <li><strong>High contrast</strong> — <code>@media (prefers-contrast: high)</code> con colores mas fuertes y bordes solidos</li>
+        <li><strong>Teclado</strong> — Snake con flechas, botones navegables por tabulacion, labels asociados a inputs</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Performance</h2>
+      <ul>
+        <li><strong>HiDPI / Retina</strong> — <code>window.devicePixelRatio</code> escala el buffer interno del canvas para que se vea nitido en pantallas 2x y 3x sin cambiar las coordenadas logicas</li>
+        <li><strong>requestAnimationFrame</strong> — Todas las animaciones usan RAF, que sincroniza con el refresco del monitor y pausa en tabs no visibles</li>
+        <li><strong>Zero dependencias</strong> — Sin librerias, sin frameworks, sin CDNs. Todo inline, cero requests externos</li>
+        <li><strong>Canvas eficiente</strong> — Solo se redibuja lo necesario (<code>clearRect</code> en cada frame), sin acumular memoria</li>
+        <li><strong>Uint8Array</strong> — Tipos nativos para datos binarios en Game of Life, analizador de audio y filtros de imagen</li>
+        <li><strong>Touch events</strong> — <code>passive: false</code> solo donde se necesita <code>preventDefault</code>, minimizando latencia</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Git workflow</h2>
+      <p>El proyecto se desarrollo con commits incrementales simulando un flujo humano real, con pausas de 5-10 segundos entre commits para reflejar tiempo de reflexion y escritura.</p>
+      <pre>  3d22e50  Add analog clock with real-time rendering and digital display
+  93a4476  Add Quick Sort comparison and Drawing Pad demos
+  85ffcdd  Performance: HiDPI canvas support, touch events, code optimizations
+  e6474eb  Add all interactive demos: particles, audio, sorting, physics...
+  6c30aae  Add responsive styles with dark theme and accessibility enhancements
+  bdd11a5  Initial project scaffold with HTML structure, SEO metadata...</pre>
+    </section>
+
+  </main>
+
+  <footer role="contentinfo">
+    <p>Proyecto creado con <strong>JavaScript puro</strong> por <a href="https://github.com/zhilius">zhilius</a> — <a href="index.html">Volver al showcase</a></p>
+  </footer>
+
+</body>
+</html>
