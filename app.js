@@ -163,7 +163,7 @@
     });
   })();
 
-  /* ===================== BUBBLE SORT ===================== */
+  /* ===================== ALGORITMOS DE ORDENAMIENTO ===================== */
   (function () {
     const c = initCanvas('cSort', 620, 120);
     if (!c) return;
@@ -171,6 +171,7 @@
     const N = 60;
     const W = 620, H = 120;
     let arr = [], comparing = [], sorted = [], running = false;
+    let currentAlgo = 'bubble';
 
     function initArr() {
       arr = Array.from({ length: N }, (_, i) => i + 1);
@@ -198,18 +199,18 @@
       }
     }
 
+    function getSpeed() {
+      return 21 - +document.getElementById('sortSpeed').value;
+    }
+
     async function bubbleSort() {
       running = true;
-      document.getElementById('sortStatus').textContent = 'Ordenando…';
-      const delay = ms => new Promise(r => setTimeout(r, ms));
+      document.getElementById('sortStatus').textContent = 'Bubble sort…';
       for (let i = 0; i < arr.length; i++) {
         for (let j = 0; j < arr.length - i - 1; j++) {
-          comparing = [j, j + 1];
-          draw();
-          await delay(21 - +document.getElementById('sortSpeed').value);
-          if (arr[j] > arr[j + 1]) {
-            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-          }
+          comparing = [j, j + 1]; draw();
+          await new Promise(r => setTimeout(r, getSpeed()));
+          if (arr[j] > arr[j + 1]) [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
         }
         sorted.push(arr.length - 1 - i);
       }
@@ -220,10 +221,61 @@
       running = false;
     }
 
+    async function quickSort() {
+      running = true;
+      document.getElementById('sortStatus').textContent = 'Quick sort…';
+
+      async function partition(lo, hi) {
+        const pivot = arr[hi];
+        let i = lo - 1;
+        for (let j = lo; j < hi; j++) {
+          if (!running) return -1;
+          comparing = [j, hi]; draw();
+          await new Promise(r => setTimeout(r, getSpeed()));
+          if (arr[j] <= pivot) {
+            i++;
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+        }
+        [arr[i + 1], arr[hi]] = [arr[hi], arr[i + 1]];
+        sorted.push(i + 1);
+        return i + 1;
+      }
+
+      async function sort(lo, hi) {
+        if (lo >= hi || !running) return;
+        const pi = await partition(lo, hi);
+        if (pi === -1) return;
+        await sort(lo, pi - 1);
+        await sort(pi + 1, hi);
+      }
+
+      await sort(0, arr.length - 1);
+      sorted = arr.map((_, i) => i);
+      comparing = [];
+      draw();
+      document.getElementById('sortStatus').textContent = 'Completado';
+      running = false;
+    }
+
     initArr();
     shuffle();
-    document.getElementById('btnSort').addEventListener('click', () => { if (!running) bubbleSort(); });
+
+    document.getElementById('btnSort').addEventListener('click', () => {
+      if (running) return;
+      if (currentAlgo === 'bubble') bubbleSort();
+      else quickSort();
+    });
+
     document.getElementById('btnShuffle').addEventListener('click', shuffle);
+
+    const btnAlgo = document.getElementById('btnAlgo');
+    btnAlgo.addEventListener('click', function () {
+      if (running) return;
+      currentAlgo = currentAlgo === 'bubble' ? 'quick' : 'bubble';
+      this.textContent = currentAlgo === 'bubble' ? 'Bubble sort' : 'Quick sort';
+      this.classList.toggle('active');
+    });
   })();
 
   /* ===================== FÍSICA ===================== */
@@ -430,5 +482,58 @@
     randomize();
     drawLife();
     requestAnimationFrame(lifeLoop);
+  })();
+
+  /* ===================== DIBUJO LIBRE ===================== */
+  (function () {
+    const c = initCanvas('cDraw', 300, 180);
+    if (!c) return;
+    const { cv, ctx } = c;
+    let drawing = false;
+
+    function getPos(e) {
+      const r = cv.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX - r.left, y: t.clientY - r.top };
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      drawing = true;
+      const p = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+
+    function moveDraw(e) {
+      e.preventDefault();
+      if (!drawing) return;
+      const p = getPos(e);
+      ctx.strokeStyle = document.getElementById('drawColor').value;
+      ctx.lineWidth = +document.getElementById('drawSize').value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+
+    function endDraw() {
+      drawing = false;
+      ctx.beginPath();
+    }
+
+    cv.addEventListener('mousedown', startDraw);
+    cv.addEventListener('mousemove', moveDraw);
+    cv.addEventListener('mouseup', endDraw);
+    cv.addEventListener('mouseleave', endDraw);
+    cv.addEventListener('touchstart', startDraw, { passive: false });
+    cv.addEventListener('touchmove', moveDraw, { passive: false });
+    cv.addEventListener('touchend', endDraw);
+
+    document.getElementById('btnDrawClear').addEventListener('click', function () {
+      ctx.clearRect(0, 0, 300, 180);
+    });
   })();
 })();
