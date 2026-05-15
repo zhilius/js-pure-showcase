@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JS Pure Showcase — Demos interactivas de JavaScript puro</title>
-  <meta name="description" content="Explorá el poder de JavaScript puro: partículas interactivas, visualizador de audio, algoritmos de ordenamiento, simulación física, fractal de Mandelbrot y Juego de la Vida de Conway.">
-  <meta name="keywords" content="javascript, canvas, interactive demos, particles, audio visualization, sorting algorithms, physics simulation, mandelbrot, game of life, conway">
+  <meta name="description" content="Explorá el poder de JavaScript puro: partículas interactivas, visualizador de audio, algoritmos de ordenamiento, simulación física, fractal de Mandelbrot, Juego de la Vida, dibujo libre y reloj analógico.">
+  <meta name="keywords" content="javascript, canvas, interactive demos, particles, audio visualization, sorting algorithms, physics simulation, mandelbrot, game of life, drawing, clock">
   <meta name="author" content="zhilius">
   <link rel="canonical" href="https://zhilius.github.io/js-pure-showcase/">
 
   <meta property="og:title" content="JS Pure Showcase — JavaScript puro sin frameworks">
-  <meta property="og:description" content="Demos interactivas de JavaScript puro: partículas, audio, algoritmos de ordenamiento, simulación física, fractal de Mandelbrot y Conway.">
+  <meta property="og:description" content="Demos interactivas de JavaScript puro: partículas, audio, algoritmos, física, Mandelbrot, Conway, dibujo y reloj.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://zhilius.github.io/js-pure-showcase/">
 
@@ -23,14 +23,299 @@
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "JS Pure Showcase",
-    "description": "Showcase interactivo de JavaScript puro con demos en canvas",
+    "description": "Showcase interactivo de JavaScript puro con 8 demos en canvas",
     "applicationCategory": "EducationalApplication",
     "browserRequirements": "Requires JavaScript",
     "author": { "@type": "Person", "name": "zhilius" }
   }
   </script>
 
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --color-bg: #0f0f13;
+      --color-surface: #1a1a24;
+      --color-surface-hover: #252535;
+      --color-border: #2a2a3e;
+      --color-border-hover: #3a3a5e;
+      --color-text: #e4e4ec;
+      --color-text-secondary: #b0b0c8;
+      --color-purple: #534AB7;
+      --color-teal: #1D9E75;
+      --color-coral: #D85A30;
+      --color-pink: #D4537E;
+      --color-amber: #BA7517;
+      --color-blue: #378ADD;
+      --radius: 12px;
+      --focus-ring: 0 0 0 3px rgba(83, 74, 183, 0.6);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 8px;
+      padding: 8px 16px;
+      background: var(--color-purple);
+      color: #fff;
+      border-radius: 6px;
+      z-index: 1000;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      top: 8px;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--color-purple), var(--color-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      max-width: 600px;
+      margin: 0.5rem auto 0;
+      font-size: 0.88rem;
+      color: var(--color-text-secondary);
+    }
+
+    main {
+      flex: 1;
+      max-width: 660px;
+      margin: 0 auto;
+      padding: 0.5rem 1rem;
+      width: 100%;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--color-surface);
+      border: 0.5px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--color-border-hover);
+    }
+
+    .card h2 {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    canvas {
+      display: block;
+      border-radius: 8px;
+      cursor: crosshair;
+      width: 100%;
+      height: auto;
+    }
+
+    canvas:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .hint {
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+      font-style: italic;
+    }
+
+    button {
+      font-size: 0.72rem;
+      font-family: inherit;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 0.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    button:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-border-hover);
+    }
+
+    button:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button[aria-pressed="true"],
+    button.active {
+      background: var(--color-purple);
+      color: #fff;
+      border-color: var(--color-purple);
+    }
+
+    input[type="color"] {
+      width: 32px;
+      height: 32px;
+      padding: 2px;
+      border: 0.5px solid var(--color-border);
+      border-radius: 6px;
+      background: var(--color-surface);
+      cursor: pointer;
+    }
+
+    input[type="color"]:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
+
+    label {
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input[type="range"] {
+      width: 80px;
+      accent-color: var(--color-purple);
+    }
+
+    input[type="range"]:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+      border-radius: 4px;
+    }
+
+    #sortStatus {
+      font-size: 0.72rem;
+      color: var(--color-text-secondary);
+      min-width: 100px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      border-top: 1px solid var(--color-border);
+      margin-top: 1rem;
+    }
+
+footer a {
+  color: var(--color-purple);
+  text-decoration: underline;
+}
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+      header { padding: 1.5rem 1rem 1rem; }
+      header h1 { font-size: 1.25rem; }
+      canvas { border-radius: 6px; }
+      button { min-height: 36px; padding: 6px 14px; }
+      input[type="range"] { width: 64px; }
+    }
+
+    @media (prefers-contrast: high) {
+      :root {
+        --color-bg: #000;
+        --color-surface: #111;
+        --color-border: #666;
+        --color-text: #fff;
+        --color-text-secondary: #ddd;
+      }
+      .card { border-width: 1px; }
+      button { border-width: 1px; }
+      footer a { text-decoration: underline; color: #8878e0; }
+    }
+
+    @media print {
+      canvas { display: none; }
+      body { color: #000; background: #fff; }
+      .card { border: 1px solid #000; break-inside: avoid; }
+    }
+  </style>
 </head>
 <body>
 
@@ -66,7 +351,7 @@
         <div class="row">
           <button id="btnSort" aria-label="Iniciar ordenamiento de barras">Ordenar</button>
           <button id="btnShuffle" aria-label="Mezclar las barras aleatoriamente">Mezclar</button>
-          <button id="btnAlgo" class="active" aria-label="Cambiar entre Bubble Sort y Quick Sort" data-algo="bubble">Bubble sort</button>
+          <button id="btnAlgo" class="active" aria-label="Cambiar entre Bubble Sort y Quick Sort">Bubble sort</button>
           <span id="sortStatus" role="status" aria-live="polite">Listo</span>
           <label>
             Velocidad
@@ -139,6 +424,361 @@
     <p>Creado con <span aria-label="JavaScript puro, sin frameworks">JS puro</span> por <a href="https://github.com/zhilius">zhilius</a></p>
   </footer>
 
-  <script defer src="app.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var PURPLE = '#534AB7', TEAL = '#1D9E75', CORAL = '#D85A30',
+          PINK = '#D4537E', AMBER = '#BA7517', BLUE = '#378ADD';
+      var COLORS = [PURPLE, TEAL, CORAL, PINK, AMBER, BLUE];
+
+      function initCanvas(id, w, h) {
+        var cv = document.getElementById(id);
+        if (!cv) return null;
+        var dpr = window.devicePixelRatio || 1;
+        cv.width = w * dpr;
+        cv.height = h * dpr;
+        cv.style.aspectRatio = w + '/' + h;
+        var ctx = cv.getContext('2d');
+        ctx.scale(dpr, dpr);
+        return { cv: cv, ctx: ctx, w: w, h: h, dpr: dpr };
+      }
+
+      function getPos(e, cv) {
+        var r = cv.getBoundingClientRect();
+        var t = e.touches ? e.touches[0] : e;
+        return { x: t.clientX - r.left, y: t.clientY - r.top };
+      }
+
+      /* ===================== PARTICULAS ===================== */
+      (function () {
+        var c = initCanvas('cParticles', 300, 160);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var mouse = { x: 150, y: 80 };
+        var particles = [];
+        for (var i = 0; i < 80; i++) {
+          particles.push({
+            x: Math.random() * 300, y: Math.random() * 160,
+            vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
+            r: Math.random() * 3 + 1, c: COLORS[i % COLORS.length]
+          });
+        }
+        function onMove(e) { e.preventDefault(); mouse = getPos(e, cv); }
+        function onLeave() { mouse = { x: -999, y: -999 }; }
+        cv.addEventListener('mousemove', onMove);
+        cv.addEventListener('mouseleave', onLeave);
+        cv.addEventListener('touchmove', onMove, { passive: false });
+        cv.addEventListener('touchend', onLeave);
+        function drawParticles() {
+          ctx.clearRect(0, 0, 300, 160);
+          for (var i = 0; i < particles.length; i++) {
+            var p = particles[i];
+            var dx = mouse.x - p.x, dy = mouse.y - p.y, dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 60 && dist > 0) {
+              var force = (60 - dist) / 60;
+              p.vx -= (dx / dist) * force * 0.8;
+              p.vy -= (dy / dist) * force * 0.8;
+            }
+            p.vx *= 0.96; p.vy *= 0.96; p.x += p.vx; p.y += p.vy;
+            if (p.x < 0 || p.x > 300) p.vx *= -1;
+            if (p.y < 0 || p.y > 160) p.vy *= -1;
+            for (var j = i + 1; j < particles.length; j++) {
+              var q = particles[j];
+              var dx2 = q.x - p.x, dy2 = q.y - p.y;
+              if (dx2 * dx2 + dy2 * dy2 < 3600) {
+                ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+                ctx.strokeStyle = p.c + '44'; ctx.lineWidth = 0.5; ctx.stroke();
+              }
+            }
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = p.c; ctx.fill();
+          }
+          requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+      })();
+
+      /* ===================== AUDIO ===================== */
+      (function () {
+        var c = initCanvas('cAudio', 300, 160);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var analyser = null, dataArr = null, animId = null, audioCtx = null, micActive = false;
+        function drawIdle() {
+          ctx.clearRect(0, 0, 300, 160);
+          var bars = 60, bw = 300 / bars;
+          for (var i = 0; i < bars; i++) {
+            var h = Math.sin(Date.now() / 800 + i * 0.3) * 20 + 22;
+            ctx.fillStyle = PURPLE + '88';
+            ctx.fillRect(i * bw, 80 - h, bw - 1, h * 2);
+          }
+          animId = requestAnimationFrame(drawIdle);
+        }
+        drawIdle();
+        document.getElementById('btnAudio').addEventListener('click', async function () {
+          if (micActive) return;
+          cancelAnimationFrame(animId);
+          try {
+            var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var src = audioCtx.createMediaStreamSource(stream);
+            analyser = audioCtx.createAnalyser(); analyser.fftSize = 128;
+            src.connect(analyser);
+            dataArr = new Uint8Array(analyser.frequencyBinCount);
+            this.textContent = 'Microfono activo';
+            this.setAttribute('aria-pressed', 'true');
+            micActive = true;
+            function loop() {
+              analyser.getByteFrequencyData(dataArr);
+              ctx.clearRect(0, 0, 300, 160);
+              var len = dataArr.length, bw = 300 / len;
+              for (var i = 0; i < len; i++) {
+                var h = (dataArr[i] / 255) * 140, hue = i * (240 / len);
+                ctx.fillStyle = 'hsl(' + (hue + 220) + ',70%,55%)';
+                ctx.fillRect(i * bw, 160 - h, bw - 1, h);
+              }
+              animId = requestAnimationFrame(loop);
+            }
+            loop();
+          } catch (e) { this.textContent = 'Sin permiso'; }
+        });
+        document.getElementById('btnSynth').addEventListener('click', function () {
+          try {
+            var ac = new (window.AudioContext || window.webkitAudioContext)();
+            var notes = [261.63, 329.63, 392, 523.25];
+            for (var i = 0; i < notes.length; i++) {
+              var o = ac.createOscillator(), g = ac.createGain();
+              o.type = 'sine'; o.frequency.value = notes[i];
+              g.gain.setValueAtTime(0.3, ac.currentTime + i * 0.18);
+              g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.18 + 0.4);
+              o.connect(g); g.connect(ac.destination);
+              o.start(ac.currentTime + i * 0.18); o.stop(ac.currentTime + i * 0.18 + 0.5);
+            }
+          } catch (e) { /* silent */ }
+        });
+      })();
+
+      /* ===================== SORT ===================== */
+      (function () {
+        var c = initCanvas('cSort', 620, 120);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var N = 60, W = 620, H = 120;
+        var arr = [], comparing = [], sorted = [], running = false, currentAlgo = 'bubble';
+        function initArr() { arr = Array.from({ length: N }, function (_, i) { return i + 1; }); sorted = []; comparing = []; }
+        function shuffle() { if (running) return; for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } sorted = []; comparing = []; draw(); document.getElementById('sortStatus').textContent = 'Mezclado'; }
+        function draw() {
+          ctx.clearRect(0, 0, W, H); var w = W / N;
+          for (var i = 0; i < N; i++) {
+            var h = (arr[i] / N) * 100;
+            ctx.fillStyle = sorted.indexOf(i) > -1 ? TEAL : comparing.indexOf(i) > -1 ? CORAL : PURPLE + 'cc';
+            ctx.fillRect(i * w, H - h, w - 1, h);
+          }
+        }
+        function getSpeed() { return 21 - +document.getElementById('sortSpeed').value; }
+        async function bubbleSort() {
+          running = true; document.getElementById('sortStatus').textContent = 'Bubble sort...';
+          for (var i = 0; i < arr.length; i++) {
+            for (var j = 0; j < arr.length - i - 1; j++) {
+              comparing = [j, j + 1]; draw();
+              await new Promise(function (r) { setTimeout(r, getSpeed()); });
+              if (arr[j] > arr[j + 1]) { var t = arr[j]; arr[j] = arr[j + 1]; arr[j + 1] = t; }
+            }
+            sorted.push(arr.length - 1 - i);
+          }
+          comparing = []; sorted = arr.map(function (_, i) { return i; }); draw();
+          document.getElementById('sortStatus').textContent = 'Completado'; running = false;
+        }
+        async function quickSort() {
+          running = true; document.getElementById('sortStatus').textContent = 'Quick sort...';
+          async function partition(lo, hi) {
+            var pivot = arr[hi], i = lo - 1;
+            for (var j = lo; j < hi; j++) {
+              if (!running) return -1;
+              comparing = [j, hi]; draw();
+              await new Promise(function (r) { setTimeout(r, getSpeed()); });
+              if (arr[j] <= pivot) { i++; var t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+            }
+            var t = arr[i + 1]; arr[i + 1] = arr[hi]; arr[hi] = t;
+            sorted.push(i + 1); return i + 1;
+          }
+          async function sort(lo, hi) {
+            if (lo >= hi || !running) return;
+            var pi = await partition(lo, hi);
+            if (pi === -1) return;
+            await sort(lo, pi - 1); await sort(pi + 1, hi);
+          }
+          await sort(0, arr.length - 1);
+          sorted = arr.map(function (_, i) { return i; }); comparing = []; draw();
+          document.getElementById('sortStatus').textContent = 'Completado'; running = false;
+        }
+        initArr(); shuffle();
+        document.getElementById('btnSort').addEventListener('click', function () { if (running) return; if (currentAlgo === 'bubble') bubbleSort(); else quickSort(); });
+        document.getElementById('btnShuffle').addEventListener('click', shuffle);
+        var btnAlgo = document.getElementById('btnAlgo');
+        btnAlgo.addEventListener('click', function () {
+          if (running) return;
+          currentAlgo = currentAlgo === 'bubble' ? 'quick' : 'bubble';
+          this.textContent = currentAlgo === 'bubble' ? 'Bubble sort' : 'Quick sort';
+          this.classList.toggle('active');
+        });
+      })();
+
+      /* ===================== FISICA ===================== */
+      (function () {
+        var c = initCanvas('cPhysics', 300, 180);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var balls = [], grav = 0.4;
+        function addBall() { balls.push({ x: Math.random() * 280 + 10, y: 10, vx: (Math.random() - 0.5) * 4, vy: 0, r: Math.random() * 10 + 6, c: COLORS[balls.length % COLORS.length], e: 0.7 + Math.random() * 0.2 }); }
+        for (var i = 0; i < 5; i++) addBall();
+        document.getElementById('btnBall').addEventListener('click', addBall);
+        document.getElementById('btnClear').addEventListener('click', function () { balls.length = 0; });
+        var gravSlider = document.getElementById('gravSlider');
+        if (gravSlider) gravSlider.addEventListener('input', function (e) { grav = +e.target.value; });
+        function physicsLoop() {
+          ctx.clearRect(0, 0, 300, 180);
+          for (var i = 0; i < balls.length; i++) {
+            var b = balls[i]; b.vy += grav; b.x += b.vx; b.y += b.vy;
+            if (b.x - b.r < 0) { b.x = b.r; b.vx *= -b.e; }
+            if (b.x + b.r > 300) { b.x = 300 - b.r; b.vx *= -b.e; }
+            if (b.y + b.r > 180) { b.y = 180 - b.r; b.vy *= -b.e; b.vx *= 0.98; if (Math.abs(b.vy) < 0.5) b.vy = 0; }
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fillStyle = b.c; ctx.fill();
+            ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2); ctx.fillStyle = '#ffffff44'; ctx.fill();
+          }
+          requestAnimationFrame(physicsLoop);
+        }
+        physicsLoop();
+      })();
+
+      /* ===================== MANDELBROT ===================== */
+      (function () {
+        var cv = document.getElementById('cMandel');
+        if (!cv) return;
+        var ctx = cv.getContext('2d');
+        var view = { x: -2.5, y: -1.2, w: 3.5, h: 2.1 };
+        function drawMandel() {
+          var W = 300, H = 180, img = ctx.createImageData(W, H);
+          for (var px = 0; px < W; px++) {
+            for (var py = 0; py < H; py++) {
+              var cr = view.x + (px / W) * view.w, ci = view.y + (py / H) * view.h;
+              var zr = 0, zi = 0, n = 0;
+              while (n < 80 && zr * zr + zi * zi < 4) { var t = zr * zr - zi * zi + cr; zi = 2 * zr * zi + ci; zr = t; n++; }
+              var idx = (py * W + px) * 4;
+              if (n >= 80) { img.data[idx] = img.data[idx + 1] = img.data[idx + 2] = 0; }
+              else { var t = n / 80; img.data[idx] = Math.round(40 + 215 * Math.sqrt(t)); img.data[idx + 1] = Math.round(20 + 200 * Math.pow(t, 0.4)); img.data[idx + 2] = Math.round(183 * (1 - t * t)); }
+              img.data[idx + 3] = 255;
+            }
+          }
+          ctx.putImageData(img, 0, 0);
+        }
+        function onMandelClick(e) {
+          var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+          var px = (t.clientX - r.left) / 300, py = (t.clientY - r.top) / 180;
+          var cx = view.x + px * view.w, cy = view.y + py * view.h;
+          view.w *= 0.35; view.h *= 0.35; view.x = cx - view.w / 2; view.y = cy - view.h / 2;
+          drawMandel();
+        }
+        cv.addEventListener('click', onMandelClick);
+        cv.addEventListener('touchstart', function (e) { e.preventDefault(); onMandelClick(e); }, { passive: false });
+        document.getElementById('btnReset').addEventListener('click', function () { view = { x: -2.5, y: -1.2, w: 3.5, h: 2.1 }; drawMandel(); });
+        drawMandel();
+      })();
+
+      /* ===================== MUSICA ===================== */
+      (function () {
+        var c = initCanvas('cDraw', 300, 180);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var drawing = false;
+        function getPos(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+        function startDraw(e) { e.preventDefault(); drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+        function moveDraw(e) {
+          e.preventDefault(); if (!drawing) return;
+          var p = getPos(e);
+          ctx.strokeStyle = document.getElementById('drawColor').value;
+          ctx.lineWidth = +document.getElementById('drawSize').value;
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+        }
+        function endDraw() { drawing = false; ctx.beginPath(); }
+        cv.addEventListener('mousedown', startDraw);
+        cv.addEventListener('mousemove', moveDraw);
+        cv.addEventListener('mouseup', endDraw);
+        cv.addEventListener('mouseleave', endDraw);
+        cv.addEventListener('touchstart', startDraw, { passive: false });
+        cv.addEventListener('touchmove', moveDraw, { passive: false });
+        cv.addEventListener('touchend', endDraw);
+        document.getElementById('btnDrawClear').addEventListener('click', function () { ctx.clearRect(0, 0, 300, 180); });
+      })();
+
+      /* ===================== RELOJ ===================== */
+      (function () {
+        var c = initCanvas('cClock', 300, 180);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var CX = 150, CY = 90, R = 72;
+        var digital = document.getElementById('digitalTime');
+        function drawClock() {
+          var now = new Date(), h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds() + now.getMilliseconds() / 1000;
+          digital.textContent = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          ctx.clearRect(0, 0, 300, 180);
+          ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2);
+          ctx.fillStyle = '#1a1a24'; ctx.strokeStyle = '#2a2a3e'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke();
+          for (var i = 0; i < 12; i++) {
+            var a = (i * Math.PI * 2) / 12 - Math.PI / 2, inner = i === 0 ? R - 12 : R - 6;
+            ctx.beginPath(); ctx.moveTo(CX + Math.cos(a) * inner, CY + Math.sin(a) * inner);
+            ctx.lineTo(CX + Math.cos(a) * (R - 2), CY + Math.sin(a) * (R - 2));
+            ctx.strokeStyle = i % 3 === 0 ? '#e4e4ec' : '#9090aa'; ctx.lineWidth = i % 3 === 0 ? 2 : 1.5; ctx.stroke();
+          }
+          ctx.save(); ctx.translate(CX, CY);
+          var hAngle = (h + m / 60) * (Math.PI * 2 / 12) - Math.PI / 2;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(hAngle) * 40, Math.sin(hAngle) * 40);
+          ctx.strokeStyle = '#534AB7'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+          var mAngle = (m + s / 60) * (Math.PI * 2 / 60) - Math.PI / 2;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(mAngle) * 55, Math.sin(mAngle) * 55);
+          ctx.strokeStyle = '#9090aa'; ctx.lineWidth = 2.5; ctx.stroke();
+          var sAngle = s * (Math.PI * 2 / 60) - Math.PI / 2;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(sAngle) * 62, Math.sin(sAngle) * 62);
+          ctx.strokeStyle = '#D85A30'; ctx.lineWidth = 1.2; ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fillStyle = '#534AB7'; ctx.fill();
+          ctx.restore();
+          requestAnimationFrame(drawClock);
+        }
+        drawClock();
+      })();
+
+      /* ===================== GAME OF LIFE ===================== */
+      (function () {
+        var c = initCanvas('cLife', 620, 140);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var CELL = 7, COLS = Math.floor(620 / CELL), ROWS = Math.floor(140 / CELL);
+        var grid = Array.from({ length: ROWS }, function () { return new Uint8Array(COLS); });
+        var running = true, animId = null, lastTime = 0;
+        function randomize() { grid = Array.from({ length: ROWS }, function () { return Uint8Array.from({ length: COLS }, function () { return Math.random() < 0.3 ? 1 : 0; }); }); }
+        function clearGrid() { grid = Array.from({ length: ROWS }, function () { return new Uint8Array(COLS); }); }
+        function nextGen() {
+          var ng = Array.from({ length: ROWS }, function () { return new Uint8Array(COLS); });
+          for (var r = 0; r < ROWS; r++) { for (var c = 0; c < COLS; c++) { var n = 0; for (var dr = -1; dr <= 1; dr++) { for (var dc = -1; dc <= 1; dc++) { if (dr === 0 && dc === 0) continue; n += grid[(r + dr + ROWS) % ROWS][(c + dc + COLS) % COLS]; } } ng[r][c] = (grid[r][c] ? n === 2 || n === 3 : n === 3) ? 1 : 0; } }
+          grid = ng;
+        }
+        function drawLife() {
+          ctx.clearRect(0, 0, 620, 140);
+          for (var r = 0; r < ROWS; r++) { for (var c = 0; c < COLS; c++) { if (grid[r][c]) { ctx.fillStyle = PURPLE; ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2); } } }
+        }
+        function lifeLoop(ts) { if (ts - lastTime > 120) { nextGen(); drawLife(); lastTime = ts; } if (running) animId = requestAnimationFrame(lifeLoop); }
+        function onLifeClick(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e, col = Math.floor((t.clientX - r.left) / CELL), row = Math.floor((t.clientY - r.top) / CELL); if (row >= 0 && row < ROWS && col >= 0 && col < COLS) { grid[row][col] = grid[row][col] ? 0 : 1; drawLife(); } }
+        cv.addEventListener('click', onLifeClick);
+        cv.addEventListener('touchstart', function (e) { e.preventDefault(); onLifeClick(e); }, { passive: false });
+        var btnPlay = document.getElementById('btnLifePlay');
+        btnPlay.addEventListener('click', function () { running = !running; this.textContent = running ? 'Pausar' : 'Reanudar'; this.setAttribute('aria-pressed', String(!running)); if (running) requestAnimationFrame(lifeLoop); });
+        document.getElementById('btnLifeRand').addEventListener('click', function () { randomize(); drawLife(); });
+        document.getElementById('btnLifeClear').addEventListener('click', function () { clearGrid(); drawLife(); });
+        randomize(); drawLife(); requestAnimationFrame(lifeLoop);
+      })();
+    })();
+  </script>
 </body>
 </html>
