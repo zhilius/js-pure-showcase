@@ -536,4 +536,79 @@
       ctx.clearRect(0, 0, 300, 180);
     });
   })();
+
+  /* ===================== RELOJ ANALÓGICO ===================== */
+  (function () {
+    const c = initCanvas('cClock', 300, 180);
+    if (!c) return;
+    const { cv, ctx } = c;
+    const CX = 150, CY = 90, R = 72;
+    const digital = document.getElementById('digitalTime');
+
+    function drawClock() {
+      const now = new Date();
+      const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds() + now.getMilliseconds() / 1000;
+
+      digital.textContent = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      ctx.clearRect(0, 0, 300, 180);
+
+      ctx.beginPath();
+      ctx.arc(CX, CY, R, 0, Math.PI * 2);
+      ctx.fillStyle = '#1a1a24';
+      ctx.strokeStyle = '#2a2a3e';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+
+      for (let i = 0; i < 12; i++) {
+        const a = (i * Math.PI * 2) / 12 - Math.PI / 2;
+        const inner = i === 0 ? R - 12 : R - 6;
+        ctx.beginPath();
+        ctx.moveTo(CX + Math.cos(a) * inner, CY + Math.sin(a) * inner);
+        ctx.lineTo(CX + Math.cos(a) * (R - 2), CY + Math.sin(a) * (R - 2));
+        ctx.strokeStyle = i % 3 === 0 ? '#e4e4ec' : '#9090aa';
+        ctx.lineWidth = i % 3 === 0 ? 2 : 1.5;
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(CX, CY);
+
+      const hAngle = (h + m / 60) * (Math.PI * 2 / 12) - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(hAngle) * 40, Math.sin(hAngle) * 40);
+      ctx.strokeStyle = '#534AB7';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      const mAngle = (m + s / 60) * (Math.PI * 2 / 60) - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(mAngle) * 55, Math.sin(mAngle) * 55);
+      ctx.strokeStyle = '#9090aa';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      const sAngle = s * (Math.PI * 2 / 60) - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(sAngle) * 62, Math.sin(sAngle) * 62);
+      ctx.strokeStyle = '#D85A30';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#534AB7';
+      ctx.fill();
+
+      ctx.restore();
+
+      requestAnimationFrame(drawClock);
+    }
+    drawClock();
+  })();
 })();
