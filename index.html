@@ -45,6 +45,7 @@
       --color-pink: #D4537E;
       --color-amber: #BA7517;
       --color-blue: #378ADD;
+      --color-link: #a78bfa;
       --radius: 12px;
       --focus-ring: 0 0 0 3px rgba(83, 74, 183, 0.6);
     }
@@ -270,13 +271,13 @@
       margin-top: 1rem;
     }
 
-footer a {
-  color: var(--color-purple);
-  text-decoration: underline;
-}
+    footer a {
+      color: var(--color-link);
+      text-decoration: underline;
+    }
 
     footer a:hover {
-      text-decoration: underline;
+      color: var(--color-purple);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -307,7 +308,7 @@ footer a {
       }
       .card { border-width: 1px; }
       button { border-width: 1px; }
-      footer a { text-decoration: underline; color: #8878e0; }
+      footer a { color: #c4b5fd; }
     }
 
     @media print {
