@@ -3,14 +3,32 @@
 
   const PURPLE = '#534AB7', TEAL = '#1D9E75', CORAL = '#D85A30',
         PINK = '#D4537E', AMBER = '#BA7517', BLUE = '#378ADD';
+  const COLORS = [PURPLE, TEAL, CORAL, PINK, AMBER, BLUE];
+
+  function initCanvas(id, w, h) {
+    const cv = document.getElementById(id);
+    if (!cv) return null;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = w * dpr;
+    cv.height = h * dpr;
+    cv.style.aspectRatio = w + '/' + h;
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { cv, ctx, w, h, dpr };
+  }
+
+  function getPos(e, cv) {
+    const r = cv.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
 
   /* ===================== PARTÍCULAS INTERACTIVAS ===================== */
   (function () {
-    const cv = document.getElementById('cParticles');
-    if (!cv) return;
-    const ctx = cv.getContext('2d');
+    const c = initCanvas('cParticles', 300, 160);
+    if (!c) return;
+    const { cv, ctx } = c;
     let mouse = { x: 150, y: 80 };
-    const COLORS = [PURPLE, TEAL, CORAL, PINK, AMBER, BLUE];
     const particles = [];
 
     for (let i = 0; i < 80; i++) {
@@ -21,19 +39,24 @@
       });
     }
 
-    function updateMouse(e) {
-      const r = cv.getBoundingClientRect();
-      mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
+    function onMove(e) {
+      e.preventDefault();
+      mouse = getPos(e, cv);
     }
+    function onLeave() { mouse = { x: -999, y: -999 }; }
 
-    cv.addEventListener('mousemove', updateMouse);
-    cv.addEventListener('mouseleave', () => { mouse = { x: -999, y: -999 }; });
+    cv.addEventListener('mousemove', onMove);
+    cv.addEventListener('mouseleave', onLeave);
+    cv.addEventListener('touchmove', onMove, { passive: false });
+    cv.addEventListener('touchend', onLeave);
 
     function drawParticles() {
       ctx.clearRect(0, 0, 300, 160);
-      for (const p of particles) {
-        const dx = mouse.x - p.x, dy = mouse.y - p.y, dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 60) {
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const dx = mouse.x - p.x, dy = mouse.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 60 && dist > 0) {
           const force = (60 - dist) / 60;
           p.vx -= (dx / dist) * force * 0.8;
           p.vy -= (dy / dist) * force * 0.8;
@@ -43,10 +66,11 @@
         if (p.x < 0 || p.x > 300) p.vx *= -1;
         if (p.y < 0 || p.y > 160) p.vy *= -1;
 
-        for (const q of particles) {
-          if (q === p) continue;
-          const dx2 = q.x - p.x, dy2 = q.y - p.y, d = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-          if (d < 60) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const q = particles[j];
+          const dx2 = q.x - p.x, dy2 = q.y - p.y;
+          const d = dx2 * dx2 + dy2 * dy2;
+          if (d < 3600) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(q.x, q.y);
@@ -67,19 +91,20 @@
 
   /* ===================== VISUALIZADOR DE AUDIO ===================== */
   (function () {
-    const cv = document.getElementById('cAudio');
-    if (!cv) return;
-    const ctx = cv.getContext('2d');
+    const c = initCanvas('cAudio', 300, 160);
+    if (!c) return;
+    const { cv, ctx } = c;
     let analyser = null, dataArr = null, animId = null, audioCtx = null;
     let micActive = false;
 
     function drawIdle() {
       ctx.clearRect(0, 0, 300, 160);
       const bars = 60;
+      const bw = 300 / bars;
       for (let i = 0; i < bars; i++) {
         const h = Math.sin(Date.now() / 800 + i * 0.3) * 20 + 22;
         ctx.fillStyle = PURPLE + '88';
-        ctx.fillRect(i * (300 / bars), 80 - h, 300 / bars - 1, h * 2);
+        ctx.fillRect(i * bw, 80 - h, bw - 1, h * 2);
       }
       animId = requestAnimationFrame(drawIdle);
     }
@@ -103,11 +128,13 @@
         function loop() {
           analyser.getByteFrequencyData(dataArr);
           ctx.clearRect(0, 0, 300, 160);
-          for (let i = 0; i < dataArr.length; i++) {
+          const len = dataArr.length;
+          const bw = 300 / len;
+          for (let i = 0; i < len; i++) {
             const h = (dataArr[i] / 255) * 140;
-            const hue = i * (240 / dataArr.length);
-            ctx.fillStyle = `hsl(${hue + 220}, 70%, 55%)`;
-            ctx.fillRect(i * (300 / dataArr.length), 160 - h, 300 / dataArr.length - 1, h);
+            const hue = i * (240 / len);
+            ctx.fillStyle = 'hsl(' + (hue + 220) + ',70%,55%)';
+            ctx.fillRect(i * bw, 160 - h, bw - 1, h);
           }
           animId = requestAnimationFrame(loop);
         }
@@ -132,18 +159,17 @@
           o.start(ac.currentTime + i * 0.18);
           o.stop(ac.currentTime + i * 0.18 + 0.5);
         }
-      } catch {
-        /* silent fallback */
-      }
+      } catch { /* silent fallback */ }
     });
   })();
 
   /* ===================== BUBBLE SORT ===================== */
   (function () {
-    const cv = document.getElementById('cSort');
-    if (!cv) return;
-    const ctx = cv.getContext('2d');
+    const c = initCanvas('cSort', 620, 120);
+    if (!c) return;
+    const { cv, ctx } = c;
     const N = 60;
+    const W = 620, H = 120;
     let arr = [], comparing = [], sorted = [], running = false;
 
     function initArr() {
@@ -163,12 +189,12 @@
     }
 
     function draw() {
-      ctx.clearRect(0, 0, 620, 120);
-      const w = 620 / N;
+      ctx.clearRect(0, 0, W, H);
+      const w = W / N;
       for (let i = 0; i < N; i++) {
         const h = (arr[i] / N) * 100;
         ctx.fillStyle = sorted.includes(i) ? TEAL : comparing.includes(i) ? CORAL : PURPLE + 'cc';
-        ctx.fillRect(i * w, 120 - h, w - 1, h);
+        ctx.fillRect(i * w, H - h, w - 1, h);
       }
     }
 
@@ -202,18 +228,17 @@
 
   /* ===================== FÍSICA ===================== */
   (function () {
-    const cv = document.getElementById('cPhysics');
-    if (!cv) return;
-    const ctx = cv.getContext('2d');
+    const c = initCanvas('cPhysics', 300, 180);
+    if (!c) return;
+    const { cv, ctx } = c;
     const balls = [];
-    const COLS = [PURPLE, TEAL, CORAL, PINK, AMBER, BLUE];
     let grav = 0.4;
 
     function addBall() {
       balls.push({
         x: Math.random() * 280 + 10, y: 10,
         vx: (Math.random() - 0.5) * 4, vy: 0,
-        r: Math.random() * 10 + 6, c: COLS[balls.length % COLS.length],
+        r: Math.random() * 10 + 6, c: COLORS[balls.length % COLORS.length],
         e: 0.7 + Math.random() * 0.2
       });
     }
@@ -230,7 +255,8 @@
 
     function physicsLoop() {
       ctx.clearRect(0, 0, 300, 180);
-      for (const b of balls) {
+      for (let i = 0; i < balls.length; i++) {
+        const b = balls[i];
         b.vy += grav;
         b.x += b.vx;
         b.y += b.vy;
@@ -277,13 +303,13 @@
             n++;
           }
           const idx = (py * W + px) * 4;
-          if (n === 80) {
+          if (n >= 80) {
             img.data[idx] = img.data[idx + 1] = img.data[idx + 2] = 0;
           } else {
             const t = n / 80;
-            img.data[idx] = Math.round(83 * t + t * (1 - t) * 215);
-            img.data[idx + 1] = Math.round(74 * t * (1 - t) * 2 * 200);
-            img.data[idx + 2] = Math.round(183 * (1 - t) + t * 30);
+            img.data[idx] = Math.round(40 + 215 * Math.sqrt(t));
+            img.data[idx + 1] = Math.round(20 + 200 * Math.pow(t, 0.4));
+            img.data[idx + 2] = Math.round(183 * (1 - t * t));
           }
           img.data[idx + 3] = 255;
         }
@@ -291,14 +317,20 @@
       ctx.putImageData(img, 0, 0);
     }
 
-    cv.addEventListener('click', function (e) {
-      const r = this.getBoundingClientRect();
-      const px = (e.clientX - r.left) / 300, py = (e.clientY - r.top) / 180;
-      const cx = view.x + px * view.w, cy = view.y + py * view.h;
+    function onMandelClick(e) {
+      const r = cv.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      const px = (t.clientX - r.left) / 300;
+      const py = (t.clientY - r.top) / 180;
+      const cx = view.x + px * view.w;
+      const cy = view.y + py * view.h;
       view.w *= 0.35; view.h *= 0.35;
       view.x = cx - view.w / 2; view.y = cy - view.h / 2;
       drawMandel();
-    });
+    }
+
+    cv.addEventListener('click', onMandelClick);
+    cv.addEventListener('touchstart', function (e) { e.preventDefault(); onMandelClick(e); }, { passive: false });
 
     document.getElementById('btnReset').addEventListener('click', function () {
       view = { x: -2.5, y: -1.2, w: 3.5, h: 2.1 };
@@ -310,9 +342,9 @@
 
   /* ===================== GAME OF LIFE ===================== */
   (function () {
-    const cv = document.getElementById('cLife');
-    if (!cv) return;
-    const ctx = cv.getContext('2d');
+    const c = initCanvas('cLife', 620, 140);
+    if (!c) return;
+    const { cv, ctx } = c;
     const CELL = 7, COLS = Math.floor(620 / CELL), ROWS = Math.floor(140 / CELL);
     let grid = Array.from({ length: ROWS }, () => new Uint8Array(COLS));
     let running = true, animId = null, lastTime = 0;
@@ -322,8 +354,7 @@
         Uint8Array.from({ length: COLS }, () => Math.random() < 0.3 ? 1 : 0)
       );
     }
-
-    function clear() {
+    function clearGrid() {
       grid = Array.from({ length: ROWS }, () => new Uint8Array(COLS));
     }
 
@@ -350,7 +381,7 @@
         for (let c = 0; c < COLS; c++) {
           if (grid[r][c]) {
             ctx.fillStyle = PURPLE;
-            ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 1, CELL - 1);
+            ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2);
           }
         }
       }
@@ -365,15 +396,19 @@
       if (running) animId = requestAnimationFrame(lifeLoop);
     }
 
-    cv.addEventListener('click', function (e) {
-      const r = this.getBoundingClientRect();
-      const col = Math.floor((e.clientX - r.left) / CELL);
-      const row = Math.floor((e.clientY - r.top) / CELL);
+    function onLifeClick(e) {
+      const r = cv.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
+      const col = Math.floor((t.clientX - r.left) / CELL);
+      const row = Math.floor((t.clientY - r.top) / CELL);
       if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
         grid[row][col] = grid[row][col] ? 0 : 1;
         drawLife();
       }
-    });
+    }
+
+    cv.addEventListener('click', onLifeClick);
+    cv.addEventListener('touchstart', function (e) { e.preventDefault(); onLifeClick(e); }, { passive: false });
 
     const btnPlay = document.getElementById('btnLifePlay');
     btnPlay.addEventListener('click', function () {
@@ -387,9 +422,8 @@
       randomize();
       drawLife();
     });
-
     document.getElementById('btnLifeClear').addEventListener('click', function () {
-      clear();
+      clearGrid();
       drawLife();
     });
 
