@@ -298,6 +298,83 @@
       color: var(--color-teal);
     }
 
+    .img-dropzone {
+      border: 1px dashed var(--color-border);
+      border-radius: 8px;
+      padding: 4px;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .img-dropzone.dragover {
+      border-color: var(--color-purple);
+      background: rgba(83, 74, 183, 0.08);
+    }
+
+    #imgHint a {
+      color: var(--color-link);
+    }
+
+    #speechText {
+      width: 100%;
+      background: #0a0a0e;
+      border: 0.5px solid var(--color-border);
+      border-radius: 6px;
+      color: var(--color-text);
+      padding: 8px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    #speechText:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    .gen-display {
+      background: #0a0a0e;
+      border: 0.5px solid var(--color-border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+      font-size: 0.9rem;
+      min-height: 40px;
+      color: var(--color-teal);
+      word-break: break-all;
+    }
+
+    #fetchResults {
+      margin-top: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .fetch-user {
+      padding: 6px 8px;
+      border-bottom: 0.5px solid var(--color-border);
+      font-size: 0.78rem;
+    }
+
+    .fetch-user:last-child {
+      border-bottom: none;
+    }
+
+    .fetch-user strong {
+      color: var(--color-text);
+    }
+
+    .fetch-user span {
+      color: var(--color-text-secondary);
+    }
+
+    .fetch-error {
+      color: var(--color-coral);
+      font-size: 0.78rem;
+      padding: 8px;
+    }
+
     footer {
       text-align: center;
       padding: 1.5rem 1rem;
@@ -479,6 +556,52 @@
           <button id="btnSnakeStart" aria-label="Iniciar o reiniciar el juego">Iniciar</button>
           <span id="snakeScore" role="status" aria-live="polite" class="hint">Usá las flechas del teclado</span>
         </div>
+      </article>
+
+      <article class="card full" aria-labelledby="img-heading">
+        <h2 id="img-heading">Editor de imágenes — File API + TypedArrays</h2>
+        <div class="img-dropzone" id="dropzone">
+          <canvas id="cImg" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Editor de imágenes con filtros"></canvas>
+          <p class="hint" id="imgHint">Arrastrá una imagen acá o <a href="#" id="imgLink">seleccioná un archivo</a></p>
+          <input type="file" id="imgFile" accept="image/*" hidden>
+        </div>
+        <div class="row">
+          <button id="btnGray" aria-label="Filtro escala de grises">Grises</button>
+          <button id="btnSepia" aria-label="Filtro sepia">Sepia</button>
+          <button id="btnInvert" aria-label="Filtro invertir colores">Invertir</button>
+          <button id="btnBright" aria-label="Filtro brillo +40">+Brillo</button>
+          <button id="btnBlur" aria-label="Filtro desenfoque">Blur</button>
+          <button id="btnImgReset" aria-label="Restaurar original">Original</button>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="speech-heading">
+        <h2 id="speech-heading">Web Speech — reconocimiento y síntesis</h2>
+        <textarea id="speechText" rows="3" aria-label="Texto para dictado o lectura" placeholder="Escribí algo o usá el micrófono..."></textarea>
+        <div class="row">
+          <button id="btnSpeechListen" aria-label="Activar reconocimiento de voz">Micrófono</button>
+          <button id="btnSpeechSpeak" aria-label="Leer el texto en voz alta">Leer texto</button>
+          <span class="hint" id="speechStatus">Presioná Micrófono y hablá</span>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="gen-heading">
+        <h2 id="gen-heading">Generators + Proxy — meta-programación ES6</h2>
+        <div class="gen-display" id="genDisplay">[0]</div>
+        <div class="row">
+          <button id="btnGenNext" aria-label="Obtener siguiente número de Fibonacci">Siguiente</button>
+          <button id="btnGenReset" aria-label="Reiniciar secuencia">Reiniciar</button>
+          <span class="hint" id="genStatus">Generator + Proxy interceptando</span>
+        </div>
+      </article>
+
+      <article class="card full" aria-labelledby="fetch-heading">
+        <h2 id="fetch-heading">Fetch API + Promises — datos asincrónicos</h2>
+        <div class="row">
+          <button id="btnFetch" aria-label="Obtener usuarios desde API externa">Obtener usuarios</button>
+          <span class="hint" id="fetchStatus">Cargá datos de JSONPlaceholder API</span>
+        </div>
+        <div id="fetchResults" aria-live="polite"></div>
       </article>
 
       <article class="card full" aria-labelledby="life-heading">
@@ -980,6 +1103,205 @@
         });
 
         reset(); drawSnake();
+      })();
+
+      /* ===================== EDITOR DE IMAGENES ===================== */
+      (function () {
+        var cv = document.getElementById('cImg');
+        if (!cv) return;
+        var ctx = cv.getContext('2d');
+        var originalData = null;
+
+        function drawDefault() {
+          ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, 300, 180);
+          ctx.fillStyle = '#9090aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('Arrastra una imagen aqui', 150, 90);
+        }
+        drawDefault();
+
+        function loadImage(file) {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            var img = new Image();
+            img.onload = function () {
+              cv.width = 300; cv.height = 180;
+              ctx.drawImage(img, 0, 0, 300, 180);
+              originalData = ctx.getImageData(0, 0, 300, 180);
+              document.getElementById('imgHint').textContent = 'Imagen cargada — aplica filtros abajo';
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+
+        var dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', function (e) { e.preventDefault(); this.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', function () { this.classList.remove('dragover'); });
+        dropzone.addEventListener('drop', function (e) { e.preventDefault(); this.classList.remove('dragover'); if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]); });
+        document.getElementById('imgLink').addEventListener('click', function (e) { e.preventDefault(); document.getElementById('imgFile').click(); });
+        document.getElementById('imgFile').addEventListener('change', function () { if (this.files[0]) loadImage(this.files[0]); });
+
+        function applyFilter(fn) {
+          if (!originalData) return;
+          var imgData = ctx.getImageData(0, 0, 300, 180);
+          fn(imgData.data);
+          ctx.putImageData(imgData, 0, 0);
+        }
+
+        document.getElementById('btnGray').addEventListener('click', function () {
+          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; d[i] = d[i + 1] = d[i + 2] = g; } });
+        });
+        document.getElementById('btnSepia').addEventListener('click', function () {
+          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { var r = d[i], g = d[i + 1], b = d[i + 2]; d[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189); d[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168); d[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131); } });
+        });
+        document.getElementById('btnInvert').addEventListener('click', function () {
+          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } });
+        });
+        document.getElementById('btnBright').addEventListener('click', function () {
+          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { d[i] = Math.min(255, d[i] + 40); d[i + 1] = Math.min(255, d[i + 1] + 40); d[i + 2] = Math.min(255, d[i + 2] + 40); } });
+        });
+        document.getElementById('btnBlur').addEventListener('click', function () {
+          if (!originalData) return;
+          var src = ctx.getImageData(0, 0, 300, 180);
+          var w = 300, h = 180, r = 2;
+          for (var y = 0; y < h; y++) {
+            for (var x = 0; x < w; x++) {
+              var rr = 0, gg = 0, bb = 0, count = 0;
+              for (var dy = -r; dy <= r; dy++) {
+                for (var dx = -r; dx <= r; dx++) {
+                  var px = x + dx, py = y + dy;
+                  if (px >= 0 && px < w && py >= 0 && py < h) { var idx = (py * w + px) * 4; rr += src.data[idx]; gg += src.data[idx + 1]; bb += src.data[idx + 2]; count++; }
+                }
+              }
+              var i2 = (y * w + x) * 4; src.data[i2] = rr / count; src.data[i2 + 1] = gg / count; src.data[i2 + 2] = bb / count;
+            }
+          }
+          ctx.putImageData(src, 0, 0);
+        });
+        document.getElementById('btnImgReset').addEventListener('click', function () { if (originalData) ctx.putImageData(originalData, 0, 0); });
+      })();
+
+      /* ===================== WEB SPEECH ===================== */
+      (function () {
+        var textarea = document.getElementById('speechText');
+        var status = document.getElementById('speechStatus');
+        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var recognition = null;
+
+        document.getElementById('btnSpeechListen').addEventListener('click', function () {
+          if (!SpeechRec) { status.textContent = 'API no soportada en este navegador'; return; }
+          recognition = new SpeechRec();
+          recognition.lang = 'es-AR';
+          recognition.interimResults = true;
+          recognition.continuous = true;
+          recognition.onresult = function (e) {
+            var transcript = '';
+            for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+            textarea.value = transcript;
+            status.textContent = 'Escuchando...';
+          };
+          recognition.onerror = function () { status.textContent = 'Error al acceder al microfono'; };
+          recognition.start();
+          this.textContent = 'Escuchando...';
+          this.disabled = true;
+          status.textContent = 'Microfono activo — habla';
+        });
+
+        document.getElementById('btnSpeechSpeak').addEventListener('click', function () {
+          var text = textarea.value.trim();
+          if (!text) { status.textContent = 'No hay texto para leer'; return; }
+          if (!window.speechSynthesis) { status.textContent = 'API no soportada'; return; }
+          window.speechSynthesis.cancel();
+          var utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'es-AR';
+          utter.rate = 0.9;
+          utter.onend = function () { status.textContent = 'Lectura finalizada'; };
+          utter.onerror = function () { status.textContent = 'Error al leer'; };
+          window.speechSynthesis.speak(utter);
+          status.textContent = 'Leyendo...';
+        });
+      })();
+
+      /* ===================== GENERATOR + PROXY ===================== */
+      (function () {
+        var display = document.getElementById('genDisplay');
+        var statusEl = document.getElementById('genStatus');
+        var log = [];
+
+        function* fibonacciGen() {
+          var a = 0, b = 1;
+          while (true) { yield a; var t = a; a = b; b = t + b; }
+        }
+
+        var gen = fibonacciGen();
+        var proxyLog = [];
+        var handler = {
+          get: function (obj, prop) { proxyLog.push('GET ' + prop); return obj[prop]; },
+          set: function (obj, prop, val) { proxyLog.push('SET ' + prop + ' = ' + val); obj[prop] = val; return true; }
+        };
+        var data = new Proxy({ calls: 0, value: '' }, handler);
+
+        function updateDisplay() {
+          display.textContent = '[' + log.join(', ') + ']';
+          data.calls++;
+        }
+
+        document.getElementById('btnGenNext').addEventListener('click', function () {
+          var next = gen.next();
+          if (next.done) return;
+          log.push(next.value);
+          data.value = String(next.value);
+          updateDisplay();
+          statusEl.textContent = 'Proxy: ' + proxyLog.slice(-2).join(', ') + ' | Total: ' + data.calls + ' llamadas';
+        });
+
+        document.getElementById('btnGenReset').addEventListener('click', function () {
+          gen = fibonacciGen();
+          log = []; proxyLog = [];
+          data.calls = 0; data.value = '';
+          display.textContent = '[0]';
+          statusEl.textContent = 'Reiniciado — Generator + Proxy activos';
+        });
+      })();
+
+      /* ===================== FETCH API ===================== */
+      (function () {
+        var results = document.getElementById('fetchResults');
+        var status = document.getElementById('fetchStatus');
+        var fetching = false;
+
+        document.getElementById('btnFetch').addEventListener('click', function () {
+          if (fetching) return;
+          fetching = true;
+          this.textContent = 'Cargando...';
+          this.disabled = true;
+          status.textContent = 'Solicitando datos a JSONPlaceholder...';
+          results.innerHTML = '';
+
+          fetch('https://jsonplaceholder.typicode.com/users')
+            .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+            .then(function (users) {
+              results.innerHTML = '';
+              for (var i = 0; i < users.length; i++) {
+                var u = users[i];
+                var el = document.createElement('div');
+                el.className = 'fetch-user';
+                el.innerHTML = '<strong>' + u.name + '</strong> <span>' + u.email + ' | ' + u.company.name + '</span>';
+                results.appendChild(el);
+              }
+              status.textContent = users.length + ' usuarios cargados via Fetch API';
+              fetching = false;
+              this.textContent = 'Obtener usuarios';
+              this.disabled = false;
+            }.bind(this))
+            .catch(function (err) {
+              results.innerHTML = '<div class="fetch-error">Error: ' + err.message + '</div>';
+              status.textContent = 'Error al cargar datos';
+              fetching = false;
+              this.textContent = 'Reintentar';
+              this.disabled = false;
+            }.bind(this));
+        });
       })();
     })();
   </script>
