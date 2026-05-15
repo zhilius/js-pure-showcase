@@ -262,6 +262,42 @@
       min-width: 100px;
     }
 
+    .calc-display {
+      background: #0a0a0e;
+      border: 0.5px solid var(--color-border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 1.3rem;
+      font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+      text-align: right;
+      min-height: 44px;
+      overflow: hidden;
+      color: var(--color-text);
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .calc-grid button {
+      font-size: 0.85rem;
+      padding: 8px 4px;
+      min-height: 36px;
+    }
+
+    .calc-eq {
+      background: var(--color-purple);
+      color: #fff;
+      border-color: var(--color-purple);
+    }
+
+    .calc-op {
+      color: var(--color-teal);
+    }
+
     footer {
       text-align: center;
       padding: 1.5rem 1rem;
@@ -404,6 +440,44 @@
         <canvas id="cClock" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Reloj analógico mostrando la hora actual"></canvas>
         <div class="row">
           <span id="digitalTime" aria-live="polite" style="font-size:0.9rem;font-variant-numeric:tabular-nums;color:var(--color-text)"></span>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="matrix-heading">
+        <h2 id="matrix-heading">Matrix Rain</h2>
+        <canvas id="cMatrix" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Lluvia digital estilo Matrix cayendo"></canvas>
+        <p class="hint">Lluvia de caracteres katakana — efecto visual continuo</p>
+      </article>
+
+      <article class="card" aria-labelledby="calc-heading">
+        <h2 id="calc-heading">Calculadora</h2>
+        <div class="calc-display" id="calcDisplay" role="status" aria-live="polite" aria-label="Resultado de la calculadora">0</div>
+        <div class="calc-grid">
+          <button class="calc-num" aria-label="Siete">7</button>
+          <button class="calc-num" aria-label="Ocho">8</button>
+          <button class="calc-num" aria-label="Nueve">9</button>
+          <button class="calc-op" aria-label="Dividir">/</button>
+          <button class="calc-num" aria-label="Cuatro">4</button>
+          <button class="calc-num" aria-label="Cinco">5</button>
+          <button class="calc-num" aria-label="Seis">6</button>
+          <button class="calc-op" aria-label="Multiplicar">*</button>
+          <button class="calc-num" aria-label="Uno">1</button>
+          <button class="calc-num" aria-label="Dos">2</button>
+          <button class="calc-num" aria-label="Tres">3</button>
+          <button class="calc-op" aria-label="Restar">-</button>
+          <button id="calcClear" aria-label="Limpiar">C</button>
+          <button class="calc-num" aria-label="Cero">0</button>
+          <button id="calcEq" class="calc-eq" aria-label="Igual">=</button>
+          <button class="calc-op" aria-label="Sumar">+</button>
+        </div>
+      </article>
+
+      <article class="card full" aria-labelledby="snake-heading">
+        <h2 id="snake-heading">Snake Game</h2>
+        <canvas id="cSnake" width="300" height="240" style="aspect-ratio:300/240" role="img" aria-label="Juego de la serpiente" tabindex="0"></canvas>
+        <div class="row">
+          <button id="btnSnakeStart" aria-label="Iniciar o reiniciar el juego">Iniciar</button>
+          <span id="snakeScore" role="status" aria-live="polite" class="hint">Usá las flechas del teclado</span>
         </div>
       </article>
 
@@ -687,7 +761,7 @@
         drawMandel();
       })();
 
-      /* ===================== MUSICA ===================== */
+      /* ===================== DIBUJO ===================== */
       (function () {
         var c = initCanvas('cDraw', 300, 180);
         if (!c) return;
@@ -778,6 +852,134 @@
         document.getElementById('btnLifeRand').addEventListener('click', function () { randomize(); drawLife(); });
         document.getElementById('btnLifeClear').addEventListener('click', function () { clearGrid(); drawLife(); });
         randomize(); drawLife(); requestAnimationFrame(lifeLoop);
+      })();
+
+      /* ===================== MATRIX RAIN ===================== */
+      (function () {
+        var c = initCanvas('cMatrix', 300, 180);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var COLS = Math.floor(300 / 14);
+        var drops = [];
+        for (var i = 0; i < COLS; i++) drops[i] = Math.floor(Math.random() * -40);
+        var chars = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝ0123456789ABCDEF';
+
+        function drawRain() {
+          ctx.fillStyle = 'rgba(15,15,19,0.06)';
+          ctx.fillRect(0, 0, 300, 180);
+          for (var i = 0; i < COLS; i++) {
+            var char = chars[Math.floor(Math.random() * chars.length)];
+            var x = i * 14, y = drops[i] * 14;
+            ctx.font = '12px monospace';
+            ctx.fillStyle = '#0f0';
+            ctx.fillText(char, x, y);
+            if (y > 180 && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+          }
+          requestAnimationFrame(drawRain);
+        }
+        drawRain();
+      })();
+
+      /* ===================== CALCULADORA ===================== */
+      (function () {
+        var current = '', previous = '', operation = null, resetNext = false;
+        var display = document.getElementById('calcDisplay');
+        function updateDisplay() { display.textContent = current || '0'; }
+        function pressNumber(num) {
+          if (resetNext) { current = ''; resetNext = false; }
+          if (current.length >= 12) return;
+          current += num; updateDisplay();
+        }
+        function pressOperator(op) {
+          if (current === '' && previous === '') return;
+          if (previous !== '' && !resetNext) calculate();
+          operation = op; previous = current; resetNext = true;
+        }
+        function calculate() {
+          var prev = parseFloat(previous), curr = parseFloat(current);
+          if (isNaN(prev) || isNaN(curr)) return;
+          var result;
+          switch (operation) {
+            case '+': result = prev + curr; break;
+            case '-': result = prev - curr; break;
+            case '*': result = prev * curr; break;
+            case '/': result = curr === 0 ? Infinity : prev / curr; break;
+            default: return;
+          }
+          current = !isFinite(result) ? 'Error' : String(parseFloat(result.toFixed(10)));
+          operation = null; previous = ''; updateDisplay();
+        }
+        function clearAll() { current = ''; previous = ''; operation = null; resetNext = false; updateDisplay(); }
+        document.querySelectorAll('.calc-num').forEach(function (btn) { btn.addEventListener('click', function () { pressNumber(this.textContent); }); });
+        document.querySelectorAll('.calc-op').forEach(function (btn) { btn.addEventListener('click', function () { pressOperator(this.textContent); }); });
+        document.getElementById('calcEq').addEventListener('click', function () { if (operation && current !== '') calculate(); });
+        document.getElementById('calcClear').addEventListener('click', clearAll);
+      })();
+
+      /* ===================== SNAKE ===================== */
+      (function () {
+        var c = initCanvas('cSnake', 300, 240);
+        if (!c) return;
+        var cv = c.cv, ctx = c.ctx;
+        var CELL = 12, COLS = Math.floor(300 / CELL), ROWS = Math.floor(240 / CELL);
+        var snake, dir, nextDir, food, score, running = false, gameOver = false, timer = null;
+        var scoreEl = document.getElementById('snakeScore');
+
+        function reset() {
+          snake = [{ x: 5, y: 7 }]; dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
+          score = 0; gameOver = false; running = false; if (timer) { clearTimeout(timer); timer = null; }
+          spawnFood(); updateScore();
+        }
+        function spawnFood() {
+          do { food = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
+          while (snake.some(function (s) { return s.x === food.x && s.y === food.y; }));
+        }
+        function updateScore() { scoreEl.textContent = 'Puntaje: ' + score; }
+        function drawSnake() {
+          ctx.clearRect(0, 0, 300, 240);
+          if (!snake) return;
+          for (var i = 0; i < snake.length; i++) {
+            var s = snake[i];
+            ctx.fillStyle = i === 0 ? '#534AB7' : '#1D9E75';
+            ctx.fillRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2);
+          }
+          ctx.fillStyle = '#D85A30';
+          ctx.beginPath(); ctx.arc(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, CELL / 2 - 2, 0, Math.PI * 2); ctx.fill();
+
+          if (gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, 300, 240);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('Game Over', 150, 110);
+            ctx.font = '14px sans-serif'; ctx.fillStyle = '#b0b0c8'; ctx.fillText('Presioná Iniciar', 150, 145);
+          }
+        }
+        function gameLoop() {
+          if (!running) return;
+          dir = { x: nextDir.x, y: nextDir.y };
+          var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+          if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS || snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
+            gameOver = true; running = false; drawSnake(); scoreEl.textContent = 'Game Over - ' + score; return;
+          }
+          snake.unshift(head);
+          if (head.x === food.x && head.y === food.y) { score++; updateScore(); spawnFood(); }
+          else { snake.pop(); }
+          drawSnake();
+          timer = setTimeout(gameLoop, 120);
+        }
+
+        document.addEventListener('keydown', function (e) {
+          if (!running) return;
+          switch (e.key) { case 'ArrowUp': if (dir.y !== 1) nextDir = { x: 0, y: -1 }; break; case 'ArrowDown': if (dir.y !== -1) nextDir = { x: 0, y: 1 }; break; case 'ArrowLeft': if (dir.x !== 1) nextDir = { x: -1, y: 0 }; break; case 'ArrowRight': if (dir.x !== -1) nextDir = { x: 1, y: 0 }; break; default: return; }
+          e.preventDefault();
+        });
+
+        document.getElementById('btnSnakeStart').addEventListener('click', function () {
+          reset(); running = true; if (timer) clearTimeout(timer); gameLoop();
+        });
+
+        reset(); drawSnake();
       })();
     })();
   </script>
