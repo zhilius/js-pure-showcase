@@ -817,6 +817,35 @@
         }
         function getSpeed() { return 21 - +document.getElementById('sortSpeed').value; }
         function sleep() { return new Promise(function (r) { setTimeout(r, getSpeed()); }); }
+        async function sortComplete() {
+          if (sortAC) {
+            try {
+              var notes = [523.25, 659.25, 783.99, 1046.50];
+              for (var n = 0; n < notes.length; n++) {
+                var o = sortAC.createOscillator(), g = sortAC.createGain();
+                o.connect(g); g.connect(sortAC.destination);
+                o.frequency.value = notes[n]; o.type = 'sine';
+                var t = sortAC.currentTime + n * 0.09;
+                g.gain.setValueAtTime(0.06, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                o.start(t); o.stop(t + 0.25);
+              }
+            } catch (e) {}
+          }
+          comparing = [];
+          sorted = arr.map(function (_, i) { return i; });
+          var w = W / N;
+          for (var i = 0; i < N; i++) {
+            if (!running) break;
+            draw();
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(i * w, 0, w, H);
+            await new Promise(function (r) { setTimeout(r, 10); });
+          }
+          draw();
+          document.getElementById('sortStatus').textContent = 'Completed';
+          running = false;
+        }
         async function bubbleSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Bubble sort...';
           for (var i = 0; i < arr.length; i++) {
@@ -828,8 +857,7 @@
             }
             sorted.push(arr.length - 1 - i);
           }
-          comparing = []; sorted = arr.map(function (_, i) { return i; }); draw();
-          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+          await sortComplete();
         }
         async function quickSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Quick sort...';
@@ -852,8 +880,7 @@
             await sort(lo, pi - 1); await sort(pi + 1, hi);
           }
           await sort(0, arr.length - 1);
-          sorted = arr.map(function (_, i) { return i; }); comparing = []; draw();
-          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+          await sortComplete();
         }
         async function selectionSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Selection sort...';
@@ -869,8 +896,7 @@
             sorted.push(i);
           }
           sorted.push(N - 1);
-          comparing = []; draw();
-          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+          await sortComplete();
         }
         async function insertionSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Insertion sort...';
@@ -886,8 +912,7 @@
             arr[j + 1] = key;
             sorted.push(i);
           }
-          comparing = []; sorted = arr.map(function (_, i) { return i; }); draw();
-          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+          await sortComplete();
         }
         async function mergeSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Merge sort...';
@@ -918,8 +943,7 @@
             await merge(lo, mid, hi);
           }
           await sort(0, N - 1);
-          sorted = arr.map(function (_, i) { return i; }); comparing = []; draw();
-          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+          await sortComplete();
         }
         initArr(); shuffle();
         document.getElementById('btnSort').addEventListener('click', function () {
