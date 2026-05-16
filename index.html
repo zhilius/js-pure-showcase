@@ -543,7 +543,7 @@
         <canvas id="cMandel" width="300" height="180" role="img" aria-label="Mandelbrot fractal rendered in real-time" style="aspect-ratio:300/180;cursor:zoom-in"></canvas>
         <div class="row">
           <button id="btnReset" aria-label="Reset the fractal view">Reset</button>
-          <span class="hint">Click to zoom</span>
+          <span class="hint">Drag to pan, scroll to zoom, Reset to default</span>
         </div>
       </article>
 
@@ -1139,17 +1139,21 @@
           }
           ctx.putImageData(img, 0, 0);
         }
+        function zoomAt(cx, cy, factor) { view.w *= factor; view.h *= factor; view.x = cx - view.w / 2; view.y = cy - view.h / 2; drawMandel(); }
         function getPos(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: (t.clientX - r.left) / 300, y: (t.clientY - r.top) / 180 }; }
-        function onDown(e) { e.preventDefault(); var p = getPos(e); isDragging = true; dragStartX = p.x; dragStartY = p.y; dragStartView = { x: view.x, y: view.y, w: view.w, h: view.h }; }
+        function onDown(e) { if (e.button === 2) return; e.preventDefault(); var p = getPos(e); isDragging = true; dragStartX = p.x; dragStartY = p.y; dragStartView = { x: view.x, y: view.y, w: view.w, h: view.h }; }
         function onMove(e) { e.preventDefault(); if (!isDragging) return; var p = getPos(e); view.x = dragStartView.x - (p.x - dragStartX) * dragStartView.w; view.y = dragStartView.y - (p.y - dragStartY) * dragStartView.h; drawMandel(); }
-        function onUp(e) { if (!isDragging) return; var p = getPos(e); var dx = p.x - dragStartX, dy = p.y - dragStartY; isDragging = false; if (Math.abs(dx) < 0.02 && Math.abs(dy) < 0.02) { var cx = dragStartView.x + dragStartX * dragStartView.w, cy = dragStartView.y + dragStartY * dragStartView.h; view.w *= 0.35; view.h *= 0.35; view.x = cx - view.w / 2; view.y = cy - view.h / 2; drawMandel(); } }
+        function onUp(e) { if (!isDragging) return; var p = getPos(e); var dx = p.x - dragStartX, dy = p.y - dragStartY; isDragging = false; if (Math.abs(dx) < 0.02 && Math.abs(dy) < 0.02) { var cx = dragStartView.x + dragStartX * dragStartView.w, cy = dragStartView.y + dragStartY * dragStartView.h; zoomAt(cx, cy, 0.35); } }
+        function onWheel(e) { e.preventDefault(); var p = getPos(e); var cx = view.x + p.x * view.w, cy = view.y + p.y * view.h; zoomAt(cx, cy, e.deltaY > 0 ? 1.6 : 0.6); }
         cv.addEventListener('mousedown', onDown);
         cv.addEventListener('mousemove', onMove);
         cv.addEventListener('mouseup', onUp);
         cv.addEventListener('mouseleave', function () { isDragging = false; });
-        cv.addEventListener('touchstart', onDown, { passive: false });
-        cv.addEventListener('touchmove', onMove, { passive: false });
-        cv.addEventListener('touchend', onUp);
+        cv.addEventListener('wheel', onWheel, { passive: false });
+        cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        cv.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { e.preventDefault(); var p = getPos(e); isDragging = true; dragStartX = p.x; dragStartY = p.y; dragStartView = { x: view.x, y: view.y, w: view.w, h: view.h }; } if (e.touches.length === 2) { /* two-finger pinch could be added */ } }, { passive: false });
+        cv.addEventListener('touchmove', function (e) { e.preventDefault(); if (!isDragging || e.touches.length !== 1) return; var p = getPos(e); view.x = dragStartView.x - (p.x - dragStartX) * dragStartView.w; view.y = dragStartView.y - (p.y - dragStartY) * dragStartView.h; drawMandel(); }, { passive: false });
+        cv.addEventListener('touchend', function (e) { if (!isDragging) return; var p = getPos({ clientX: (dragStartX * 300), clientY: (dragStartY * 180) }); isDragging = false; });
         document.getElementById('btnReset').addEventListener('click', function () { view = { x: -2.5, y: -1.2, w: 3.5, h: 2.1 }; drawMandel(); });
         drawMandel();
       })();
