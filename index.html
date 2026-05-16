@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JS Pure Showcase — Pure JavaScript Interactive Demos</title>
   <meta name="description" content="Explore the power of pure JavaScript: interactive particles, audio visualizer, sorting algorithms, physics simulation, Mandelbrot fractal, Game of Life, drawing pad, analog clock, and more.">
-  <meta name="keywords" content="javascript, canvas, interactive demos, particles, audio visualization, sorting algorithms, physics simulation, mandelbrot, game of life, drawing, clock, matrix, calculator, snake, web speech, fetch api">
+  <meta name="keywords" content="javascript, canvas, interactive demos, particles, audio visualization, sorting algorithms, physics simulation, mandelbrot, game of life, drawing, clock, matrix, calculator, snake">
   <meta name="author" content="zhilius">
   <link rel="canonical" href="https://zhilius.github.io/js-pure-showcase/">
 
@@ -358,65 +358,6 @@
       color: var(--color-link);
     }
 
-    #speechText {
-      width: 100%;
-      background: #0a0a0e;
-      border: 0.5px solid var(--color-border);
-      border-radius: 6px;
-      color: var(--color-text);
-      padding: 8px;
-      font-family: inherit;
-      font-size: 0.82rem;
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    #speechText:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-ring);
-    }
-
-    .gen-display {
-      background: #0a0a0e;
-      border: 0.5px solid var(--color-border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
-      font-size: 0.9rem;
-      min-height: 40px;
-      color: var(--color-teal);
-      word-break: break-all;
-    }
-
-    #fetchResults {
-      margin-top: 8px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .fetch-user {
-      padding: 6px 8px;
-      border-bottom: 0.5px solid var(--color-border);
-      font-size: 0.78rem;
-    }
-
-    .fetch-user:last-child {
-      border-bottom: none;
-    }
-
-    .fetch-user strong {
-      color: var(--color-text);
-    }
-
-    .fetch-user span {
-      color: var(--color-text-secondary);
-    }
-
-    .fetch-error {
-      color: var(--color-coral);
-      font-size: 0.78rem;
-      padding: 8px;
-    }
 
     footer {
       text-align: center;
@@ -634,34 +575,6 @@
         </div>
       </article>
 
-      <article class="card" aria-labelledby="speech-heading">
-        <h2 id="speech-heading"><a href="demos/speech.html" class="demo-link">Web Speech — Recognition and Synthesis</a></h2>
-        <textarea id="speechText" rows="3" aria-label="Text for dictation or reading" placeholder="Type something or use the microphone..."></textarea>
-        <div class="row">
-          <button id="btnSpeechListen" aria-label="Activate voice recognition">Microphone</button>
-          <button id="btnSpeechSpeak" aria-label="Read text aloud">Read Text</button>
-          <span class="hint" id="speechStatus">Press Microphone and speak</span>
-        </div>
-      </article>
-
-      <article class="card" aria-labelledby="gen-heading">
-        <h2 id="gen-heading"><a href="demos/gen-proxy.html" class="demo-link">Generators + Proxy — ES6 Metaprogramming</a></h2>
-        <div class="gen-display" id="genDisplay">[0]</div>
-        <div class="row">
-          <button id="btnGenNext" aria-label="Get next Fibonacci number">Next</button>
-          <button id="btnGenReset" aria-label="Reset sequence">Reset</button>
-          <span class="hint" id="genStatus">Generator + Proxy intercepting</span>
-        </div>
-      </article>
-
-      <article class="card full" aria-labelledby="fetch-heading">
-        <h2 id="fetch-heading"><a href="demos/fetch.html" class="demo-link">Fetch API + Promises — Asynchronous Data</a></h2>
-        <div class="row">
-          <button id="btnFetch" aria-label="Fetch users from external API">Fetch Users</button>
-          <span class="hint" id="fetchStatus">Load data from JSONPlaceholder API</span>
-        </div>
-        <div id="fetchResults" aria-live="polite"></div>
-      </article>
 
       <article class="card full" aria-labelledby="life-heading">
         <h2 id="life-heading"><a href="demos/life.html" class="demo-link">Cellular Automaton — Conway's Game of Life</a></h2>
@@ -1457,139 +1370,7 @@
         reset(); drawSnake();
       })();
 
-      /* ===================== WEB SPEECH ===================== */
-      (function () {
-        var textarea = document.getElementById('speechText');
-        var status = document.getElementById('speechStatus');
-        var btnListen = document.getElementById('btnSpeechListen');
-        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        var recognition = null, listening = false;
 
-        btnListen.addEventListener('click', function () {
-          if (listening) {
-            if (recognition) { recognition.stop(); recognition = null; }
-            listening = false;
-            btnListen.textContent = 'Microphone';
-            btnListen.disabled = false;
-            status.textContent = 'Stopped';
-            return;
-          }
-          if (!SpeechRec) { status.textContent = 'API not supported in this browser'; return; }
-          try {
-            recognition = new SpeechRec();
-            recognition.lang = 'es-AR';
-            recognition.interimResults = true;
-            recognition.continuous = true;
-            recognition.onresult = function (e) {
-              var transcript = '';
-              for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
-              textarea.value = transcript;
-            };
-            recognition.onerror = function (e) { var msg = e.error || 'unknown'; if (msg === 'network') { status.textContent = 'SpeechRecognition requires a server (HTTPS) — not available on file://'; } else { status.textContent = 'Mic error: ' + msg; } listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; };
-            recognition.onend = function () { if (listening) { listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; status.textContent = 'Listening ended — click again'; } };
-            recognition.start();
-            listening = true;
-            btnListen.textContent = 'Stop';
-            status.textContent = 'Listening...';
-          } catch (e) { status.textContent = 'Error: ' + e.message; }
-        });
-
-        document.getElementById('btnSpeechSpeak').addEventListener('click', function () {
-          var text = textarea.value.trim();
-          if (!text) { status.textContent = 'No text to read'; return; }
-          if (!window.speechSynthesis) { status.textContent = 'API not supported'; return; }
-          window.speechSynthesis.cancel();
-          var utter = new SpeechSynthesisUtterance(text);
-          utter.lang = 'es-AR';
-          utter.rate = 0.9;
-          utter.onend = function () { status.textContent = 'Reading finished'; };
-          utter.onerror = function () { status.textContent = 'Error reading'; };
-          window.speechSynthesis.speak(utter);
-          status.textContent = 'Reading...';
-        });
-      })();
-
-      /* ===================== GENERATOR + PROXY ===================== */
-      (function () {
-        var display = document.getElementById('genDisplay');
-        var statusEl = document.getElementById('genStatus');
-        var log = [];
-
-        function* fibonacciGen() {
-          var a = 0, b = 1;
-          while (true) { yield a; var t = a; a = b; b = t + b; }
-        }
-
-        var gen = fibonacciGen();
-        var proxyLog = [];
-        var handler = {
-          get: function (obj, prop) { proxyLog.push('GET ' + prop); return obj[prop]; },
-          set: function (obj, prop, val) { proxyLog.push('SET ' + prop + ' = ' + val); obj[prop] = val; return true; }
-        };
-        var data = new Proxy({ calls: 0, value: '' }, handler);
-
-        function updateDisplay() {
-          display.textContent = '[' + log.join(', ') + ']';
-          data.calls++;
-        }
-
-        document.getElementById('btnGenNext').addEventListener('click', function () {
-          var next = gen.next();
-          if (next.done) return;
-          log.push(next.value);
-          data.value = String(next.value);
-          updateDisplay();
-          statusEl.textContent = 'Proxy: ' + proxyLog.slice(-2).join(', ') + ' | Total: ' + data.calls + ' calls';
-        });
-
-        document.getElementById('btnGenReset').addEventListener('click', function () {
-          gen = fibonacciGen();
-          log = []; proxyLog = [];
-          data.calls = 0; data.value = '';
-          display.textContent = '[0]';
-          statusEl.textContent = 'Reset — Generator + Proxy active';
-        });
-      })();
-
-      /* ===================== FETCH API ===================== */
-      (function () {
-        var results = document.getElementById('fetchResults');
-        var status = document.getElementById('fetchStatus');
-        var fetching = false;
-
-        document.getElementById('btnFetch').addEventListener('click', function () {
-          if (fetching) return;
-          fetching = true;
-          this.textContent = 'Loading...';
-          this.disabled = true;
-          status.textContent = 'Requesting data from JSONPlaceholder...';
-          results.innerHTML = '';
-
-          fetch('https://jsonplaceholder.typicode.com/users')
-            .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-            .then(function (users) {
-              results.innerHTML = '';
-              for (var i = 0; i < users.length; i++) {
-                var u = users[i];
-                var el = document.createElement('div');
-                el.className = 'fetch-user';
-                el.innerHTML = '<strong>' + u.name + '</strong> <span>' + u.email + ' | ' + u.company.name + '</span>';
-                results.appendChild(el);
-              }
-              status.textContent = users.length + ' users loaded via Fetch API';
-              fetching = false;
-              this.textContent = 'Fetch Users';
-              this.disabled = false;
-            }.bind(this))
-            .catch(function (err) {
-              results.innerHTML = '<div class="fetch-error">Error: ' + err.message + '</div>';
-              status.textContent = 'Error loading data';
-              fetching = false;
-              this.textContent = 'Retry';
-              this.disabled = false;
-            }.bind(this));
-        });
-      })();
     })();
   </script>
 </body>
