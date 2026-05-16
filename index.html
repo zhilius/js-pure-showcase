@@ -222,6 +222,24 @@
       transform: scale(0.97);
     }
 
+    a.dl-link {
+      font-size: 0.72rem;
+      font-family: inherit;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 0.5px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+      display: inline-block;
+    }
+    a.dl-link:hover {
+      background: var(--color-surface-hover);
+      border-color: var(--color-border-hover);
+    }
+
     button[aria-pressed="true"],
     button.active {
       background: var(--color-purple);
@@ -471,11 +489,14 @@
       </article>
 
       <article class="card" aria-labelledby="audio-heading">
-        <h2 id="audio-heading"><a href="demos/audio.html" class="demo-link">Audio Visualizer</a></h2>
-        <canvas id="cAudio" width="300" height="160" style="aspect-ratio:300/160" role="img" aria-label="Real-time audio visualizer"></canvas>
+        <h2 id="audio-heading"><a href="demos/audio.html" class="demo-link">Audio Recorder</a></h2>
+        <canvas id="cAudio" width="300" height="160" style="aspect-ratio:300/160" role="img" aria-label="Audio recorder with live frequency visualization"></canvas>
         <div class="row">
-          <button id="btnAudio" aria-label="Activate microphone for real-time audio visualization">Activate Microphone</button>
-          <button id="btnSynth" aria-label="Play a sequence of musical notes">Play Note</button>
+          <button id="btnRecord" aria-label="Start recording audio from microphone">Record</button>
+          <button id="btnStop" aria-label="Stop recording" disabled>Stop</button>
+          <button id="btnPlay" aria-label="Play recorded audio" disabled>Play</button>
+          <a id="btnDownload" class="dl-link" href="#" download="recording.webm" hidden>Download</a>
+          <span id="recStatus" role="status" aria-live="polite">Ready</span>
         </div>
       </article>
 
@@ -729,7 +750,17 @@
         var c = initCanvas('cAudio', 300, 160);
         if (!c) return;
         var cv = c.cv, ctx = c.ctx;
-        var analyser = null, dataArr = null, animId = null, audioCtx = null, micActive = false;
+        var stream = null, mediaRecorder = null, chunks = [];
+        var audioBlob = null, audioUrl = null;
+        var audioCtx = null, analyser = null, dataArr = null, animId = null;
+        var startTime = null, timerInterval = null;
+        var recording = false;
+        var btnRecord = document.getElementById('btnRecord');
+        var btnStop = document.getElementById('btnStop');
+        var btnPlay = document.getElementById('btnPlay');
+        var btnDownload = document.getElementById('btnDownload');
+        var recStatus = document.getElementById('recStatus');
+
         function drawIdle() {
           ctx.clearRect(0, 0, 300, 160);
           var bars = 60, bw = 300 / bars;
@@ -741,46 +772,85 @@
           animId = requestAnimationFrame(drawIdle);
         }
         drawIdle();
-        document.getElementById('btnAudio').addEventListener('click', async function () {
-          if (micActive) return;
+
+        function stopVis() {
           cancelAnimationFrame(animId);
-          try {
-            var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            var src = audioCtx.createMediaStreamSource(stream);
-            analyser = audioCtx.createAnalyser(); analyser.fftSize = 128;
-            src.connect(analyser);
-            dataArr = new Uint8Array(analyser.frequencyBinCount);
-            this.textContent = 'Microphone active';
-            this.setAttribute('aria-pressed', 'true');
-            micActive = true;
-            function loop() {
-              analyser.getByteFrequencyData(dataArr);
-              ctx.clearRect(0, 0, 300, 160);
-              var len = dataArr.length, bw = 300 / len;
-              for (var i = 0; i < len; i++) {
-                var h = (dataArr[i] / 255) * 140, hue = i * (240 / len);
-                ctx.fillStyle = 'hsl(' + (hue + 220) + ',70%,55%)';
-                ctx.fillRect(i * bw, 160 - h, bw - 1, h);
-              }
-              animId = requestAnimationFrame(loop);
+          if (audioCtx) { audioCtx.close(); audioCtx = null; }
+          analyser = null; dataArr = null;
+        }
+
+        function startVis(s) {
+          stopVis();
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          var src = audioCtx.createMediaStreamSource(s);
+          analyser = audioCtx.createAnalyser(); analyser.fftSize = 128;
+          src.connect(analyser);
+          dataArr = new Uint8Array(analyser.frequencyBinCount);
+          function loop() {
+            analyser.getByteFrequencyData(dataArr);
+            ctx.clearRect(0, 0, 300, 160);
+            var len = dataArr.length, bw2 = 300 / len;
+            for (var i = 0; i < len; i++) {
+              var h = (dataArr[i] / 255) * 140, hue = i * (240 / len);
+              ctx.fillStyle = 'hsl(' + (hue + 220) + ',70%,55%)';
+              ctx.fillRect(i * bw2, 160 - h, bw2 - 1, h);
             }
-            loop();
-          } catch (e) { this.textContent = 'No permission'; }
+            animId = requestAnimationFrame(loop);
+          }
+          loop();
+        }
+
+        function cleanupStream() {
+          if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+        }
+
+        btnRecord.addEventListener('click', async function () {
+          try {
+            cleanupStream();
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            startVis(stream);
+            chunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = function (e) { if (e.data.size > 0) chunks.push(e.data); };
+            mediaRecorder.onstop = function () {
+              audioBlob = new Blob(chunks, { type: 'audio/webm' });
+              audioUrl = URL.createObjectURL(audioBlob);
+              btnPlay.disabled = false;
+              btnDownload.href = audioUrl;
+              btnDownload.hidden = false;
+              cleanupStream();
+              stopVis(); drawIdle();
+              if (timerInterval) clearInterval(timerInterval);
+              btnRecord.disabled = false; btnStop.disabled = true;
+              recStatus.textContent = 'Ready — ' + Math.floor((Date.now() - startTime) / 1000) + 's';
+              startTime = null; recording = false;
+            };
+            mediaRecorder.start();
+            recording = true;
+            startTime = Date.now();
+            timerInterval = setInterval(function () {
+              var elapsed = Math.floor((Date.now() - startTime) / 1000);
+              var m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+              var s = String(elapsed % 60).padStart(2, '0');
+              recStatus.textContent = m + ':' + s;
+            }, 100);
+            btnRecord.disabled = true; btnStop.disabled = false;
+          } catch (e) { recStatus.textContent = 'Mic not available'; }
         });
-        document.getElementById('btnSynth').addEventListener('click', function () {
-          try {
-            var ac = new (window.AudioContext || window.webkitAudioContext)();
-            var notes = [261.63, 329.63, 392, 523.25];
-            for (var i = 0; i < notes.length; i++) {
-              var o = ac.createOscillator(), g = ac.createGain();
-              o.type = 'sine'; o.frequency.value = notes[i];
-              g.gain.setValueAtTime(0.3, ac.currentTime + i * 0.18);
-              g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.18 + 0.4);
-              o.connect(g); g.connect(ac.destination);
-              o.start(ac.currentTime + i * 0.18); o.stop(ac.currentTime + i * 0.18 + 0.5);
-            }
-          } catch (e) { /* silent */ }
+
+        btnStop.addEventListener('click', function () {
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            btnStop.disabled = true;
+          }
+        });
+
+        btnPlay.addEventListener('click', function () {
+          if (audioUrl) { var a = new Audio(audioUrl); a.play(); }
+        });
+
+        window.addEventListener('beforeunload', function () {
+          cleanupStream(); stopVis(); if (timerInterval) clearInterval(timerInterval);
         });
       })();
 
@@ -818,26 +888,13 @@
         function getSpeed() { return 21 - +document.getElementById('sortSpeed').value; }
         function sleep() { return new Promise(function (r) { setTimeout(r, getSpeed()); }); }
         async function sortComplete() {
-          if (sortAC) {
-            try {
-              var notes = [523.25, 659.25, 783.99, 1046.50];
-              for (var n = 0; n < notes.length; n++) {
-                var o = sortAC.createOscillator(), g = sortAC.createGain();
-                o.connect(g); g.connect(sortAC.destination);
-                o.frequency.value = notes[n]; o.type = 'sine';
-                var t = sortAC.currentTime + n * 0.09;
-                g.gain.setValueAtTime(0.06, t);
-                g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-                o.start(t); o.stop(t + 0.25);
-              }
-            } catch (e) {}
-          }
           comparing = [];
           sorted = arr.map(function (_, i) { return i; });
           var w = W / N;
           for (var i = 0; i < N; i++) {
             if (!running) break;
             draw();
+            sortSound(arr[i]);
             ctx.fillStyle = 'rgba(255,255,255,0.12)';
             ctx.fillRect(i * w, 0, w, H);
             await new Promise(function (r) { setTimeout(r, 10); });
