@@ -1078,6 +1078,77 @@
         var cv = c.cv, ctx = c.ctx;
         var tool = 'pen', drawing = false, startP = null;
         var undoStack = [], undoMax = 20;
+        var drawAC = null, lastDrawSound = 0;
+        var lastX = -1, lastY = -1;
+
+        var indicator = document.createElement('div');
+        indicator.style.cssText = 'position:fixed;pointer-events:none;border-radius:50%;border:2px solid rgba(255,255,255,0.5);transform:translate(-50%,-50%);z-index:9999;display:none;transition:none';
+        document.body.appendChild(indicator);
+
+        var toolLabel = document.createElement('div');
+        toolLabel.style.cssText = 'position:fixed;pointer-events:none;font-size:10px;font-family:sans-serif;color:#fff;background:rgba(0,0,0,0.7);padding:1px 6px;border-radius:4px;z-index:9999;display:none;white-space:nowrap;transform:translate(6px,-50%)';
+        document.body.appendChild(toolLabel);
+
+        function drawSound(action) {
+          if (Date.now() - lastDrawSound < 40) return;
+          lastDrawSound = Date.now();
+          try {
+            if (!drawAC) drawAC = new (window.AudioContext || window.webkitAudioContext)();
+            var o = drawAC.createOscillator(), g = drawAC.createGain();
+            o.connect(g); g.connect(drawAC.destination);
+            var t = drawAC.currentTime;
+            if (action === 'pen') {
+              o.type = 'sine'; o.frequency.value = 520;
+              g.gain.setValueAtTime(0.02, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+              o.start(t); o.stop(t + 0.03);
+            } else if (action === 'eraser') {
+              o.type = 'square'; o.frequency.value = 300;
+              g.gain.setValueAtTime(0.015, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+              o.start(t); o.stop(t + 0.04);
+            } else if (action === 'spray') {
+              o.type = 'sawtooth'; o.frequency.value = 1200;
+              g.gain.setValueAtTime(0.01, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+              o.start(t); o.stop(t + 0.02);
+            } else if (action === 'shape') {
+              o.type = 'sine'; o.frequency.value = 660;
+              g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+              o.start(t); o.stop(t + 0.1);
+            }
+          } catch (e) {}
+        }
+
+        function updateIndicator(e) {
+          var r = cv.getBoundingClientRect();
+          var x = e.clientX, y = e.clientY;
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            indicator.style.display = 'block';
+            toolLabel.style.display = 'block';
+            var size = +document.getElementById('drawSize').value;
+            if (tool === 'eraser') {
+              var es = size * 3;
+              indicator.style.width = es + 'px'; indicator.style.height = es + 'px';
+              indicator.style.borderColor = 'rgba(255,80,80,0.7)';
+              indicator.style.background = 'rgba(255,80,80,0.08)';
+            } else if (tool === 'pen') {
+              indicator.style.width = size + 'px'; indicator.style.height = size + 'px';
+              indicator.style.borderColor = document.getElementById('drawColor').value + 'aa';
+              indicator.style.background = 'transparent';
+            } else {
+              indicator.style.width = size + 'px'; indicator.style.height = size + 'px';
+              indicator.style.borderColor = 'rgba(255,255,255,0.3)';
+              indicator.style.borderStyle = tool === 'spray' ? 'dotted' : 'solid';
+              indicator.style.background = 'transparent';
+            }
+            indicator.style.left = x + 'px'; indicator.style.top = y + 'px';
+            toolLabel.textContent = tool;
+            toolLabel.style.left = x + 'px'; toolLabel.style.top = (y - 14) + 'px';
+          } else {
+            indicator.style.display = 'none';
+            toolLabel.style.display = 'none';
+          }
+          lastX = x; lastY = y;
+        }
+
         function saveState() { undoStack.push(ctx.getImageData(0, 0, 300, 180)); if (undoStack.length > undoMax) undoStack.shift(); }
         function undo() { if (undoStack.length) { ctx.putImageData(undoStack.pop(), 0, 0); } }
         function getPos(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
@@ -1091,26 +1162,30 @@
         }
         function onDown(e) {
           e.preventDefault(); drawing = true; startP = getPos(e);
-          if (tool === 'pen' || tool === 'eraser') { saveState(); ctx.beginPath(); ctx.moveTo(startP.x, startP.y); }
-          if (tool === 'spray') saveState();
+          if (tool === 'pen' || tool === 'eraser') { saveState(); ctx.beginPath(); ctx.moveTo(startP.x, startP.y); drawSound(tool); }
+          if (tool === 'spray') { saveState(); drawSound('spray'); }
         }
         function onMove(e) {
-          e.preventDefault(); if (!drawing) return;
+          e.preventDefault(); updateIndicator(e);
+          if (!drawing) return;
           var p = getPos(e); setupCtx();
           if (tool === 'pen') {
             ctx.globalCompositeOperation = 'source-over';
             ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+            drawSound('pen');
           } else if (tool === 'eraser') {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.lineWidth = +document.getElementById('drawSize').value * 3;
             ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y);
             ctx.globalCompositeOperation = 'source-over';
+            drawSound('eraser');
           } else if (tool === 'spray') {
             var r = +document.getElementById('drawSize').value * 2;
             for (var k = 0; k < 15; k++) {
               var ox = (Math.random() - 0.5) * r, oy = (Math.random() - 0.5) * r;
               ctx.fillRect(p.x + ox, p.y + oy, 1.5, 1.5);
             }
+            drawSound('spray');
           } else {
             ctx.clearRect(0, 0, 300, 180);
             if (undoStack.length) ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
@@ -1133,13 +1208,15 @@
         function onUp(e) {
           if (!drawing) return;
           var p = getPos(e);
-          if (['rect', 'circle', 'line'].indexOf(tool) >= 0) { saveState(); onMove(e); }
+          if (['rect', 'circle', 'line'].indexOf(tool) >= 0) { saveState(); onMove(e); drawSound('shape'); }
           drawing = false; ctx.beginPath(); startP = null;
         }
+        cv.addEventListener('mousemove', updateIndicator);
+        cv.addEventListener('mouseleave', function () { indicator.style.display = 'none'; toolLabel.style.display = 'none'; });
         cv.addEventListener('mousedown', onDown);
         cv.addEventListener('mousemove', onMove);
         cv.addEventListener('mouseup', onUp);
-        cv.addEventListener('mouseleave', onUp);
+        cv.addEventListener('mouseleave', function (e) { onUp(e); });
         cv.addEventListener('touchstart', onDown, { passive: false });
         cv.addEventListener('touchmove', onMove, { passive: false });
         cv.addEventListener('touchend', onUp);
@@ -1150,7 +1227,7 @@
             for (var j = 0; j < toolBtns.length; j++) toolBtns[j].classList.remove('active');
             this.classList.add('active');
             tool = this.getAttribute('data-tool');
-            cv.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+            updateIndicator({ clientX: lastX, clientY: lastY });
           });
         }
         document.getElementById('btnDrawUndo').addEventListener('click', undo);
