@@ -251,6 +251,11 @@
     .algo-btn { font-size: 0.68rem; padding: 3px 8px; cursor: pointer; border-radius: 4px; border: 0.5px solid var(--color-border); background: var(--color-surface); color: var(--color-text); transition: all 0.15s; }
     .algo-btn.active { background: var(--color-purple); color: #fff; border-color: var(--color-purple); }
 
+    .tool-group { display: flex; gap: 2px; flex-wrap: wrap; }
+    .tool-btn { font-size: 0.65rem; padding: 2px 7px; cursor: pointer; border-radius: 3px; border: 0.5px solid var(--color-border); background: var(--color-surface); color: var(--color-text); transition: all 0.1s; }
+    .tool-btn.active { background: var(--color-purple); color: #fff; border-color: var(--color-purple); }
+    select { font-size: 0.72rem; font-family: inherit; padding: 4px 6px; border-radius: 4px; border: 0.5px solid var(--color-border); background: var(--color-surface); color: var(--color-text); cursor: pointer; }
+
     input[type="color"] {
       width: 32px;
       height: 32px;
@@ -546,14 +551,23 @@
         <h2 id="draw-heading"><a href="demos/draw.html" class="demo-link">Free Drawing</a></h2>
         <canvas id="cDraw" width="300" height="180" style="aspect-ratio:300/180;cursor:crosshair" role="img" aria-label="Canvas for free drawing"></canvas>
         <div class="row">
-          <label>
-            Color
-            <input type="color" id="drawColor" value="#534AB7" aria-label="Brush color">
-          </label>
-          <label>
-            Size
-            <input type="range" id="drawSize" min="1" max="20" value="4" step="1" aria-label="Brush size">
-          </label>
+          <div class="tool-group" role="radiogroup" aria-label="Drawing tool">
+            <button data-tool="pen" class="tool-btn active">Pen</button>
+            <button data-tool="eraser" class="tool-btn">Eraser</button>
+            <button data-tool="spray" class="tool-btn">Spray</button>
+            <button data-tool="rect" class="tool-btn">Rect</button>
+            <button data-tool="circle" class="tool-btn">Circle</button>
+            <button data-tool="line" class="tool-btn">Line</button>
+          </div>
+        </div>
+        <div class="row">
+          <label>Color <input type="color" id="drawColor" value="#534AB7" aria-label="Brush color"></label>
+          <label>Size <input type="range" id="drawSize" min="1" max="40" value="4" step="1" aria-label="Brush size"></label>
+          <label>Opacity <input type="range" id="drawOpacity" min="0.1" max="1" value="1" step="0.1" aria-label="Brush opacity"></label>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="drawFill" aria-label="Fill shapes"> Fill</label>
+          <button id="btnDrawUndo" aria-label="Undo last stroke">Undo</button>
           <button id="btnDrawClear" aria-label="Clear the drawing">Clear</button>
         </div>
       </article>
@@ -563,6 +577,22 @@
         <canvas id="cClock" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Analog clock showing the current time"></canvas>
         <div class="row">
           <span id="digitalTime" aria-live="polite" style="font-size:0.9rem;font-variant-numeric:tabular-nums;color:var(--color-text)"></span>
+          <select id="tzSelect" aria-label="Time zone">
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">New York</option>
+            <option value="America/Chicago">Chicago</option>
+            <option value="America/Denver">Denver</option>
+            <option value="America/Los_Angeles">Los Angeles</option>
+            <option value="Europe/London">London</option>
+            <option value="Europe/Paris">Paris</option>
+            <option value="Europe/Berlin">Berlin</option>
+            <option value="Europe/Moscow">Moscow</option>
+            <option value="Asia/Tokyo">Tokyo</option>
+            <option value="Asia/Shanghai">Shanghai</option>
+            <option value="Australia/Sydney">Sydney</option>
+            <option value="Pacific/Auckland">Auckland</option>
+            <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+          </select>
         </div>
       </article>
 
@@ -601,23 +631,6 @@
         <div class="row">
           <button id="btnSnakeStart" aria-label="Start or restart the game">Start</button>
           <span id="snakeScore" role="status" aria-live="polite" class="hint">Use the arrow keys</span>
-        </div>
-      </article>
-
-      <article class="card full" aria-labelledby="img-heading">
-        <h2 id="img-heading"><a href="demos/img-editor.html" class="demo-link">Image Editor — File API + TypedArrays</a></h2>
-        <div class="img-dropzone" id="dropzone">
-          <canvas id="cImg" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Image editor with filters"></canvas>
-          <p class="hint" id="imgHint">Drag an image here or <a href="#" id="imgLink">select a file</a></p>
-          <input type="file" id="imgFile" accept="image/*" hidden>
-        </div>
-        <div class="row">
-          <button id="btnGray" aria-label="Grayscale filter">Grayscale</button>
-          <button id="btnSepia" aria-label="Sepia filter">Sepia</button>
-          <button id="btnInvert" aria-label="Invert colors filter">Invert</button>
-          <button id="btnBright" aria-label="Brightness +40 filter">+Brightness</button>
-          <button id="btnBlur" aria-label="Blur filter">Blur</button>
-          <button id="btnImgReset" aria-label="Restore original">Original</button>
         </div>
       </article>
 
@@ -1146,26 +1159,85 @@
         var c = initCanvas('cDraw', 300, 180);
         if (!c) return;
         var cv = c.cv, ctx = c.ctx;
-        var drawing = false;
+        var tool = 'pen', drawing = false, startP = null;
+        var undoStack = [], undoMax = 20;
+        function saveState() { undoStack.push(ctx.getImageData(0, 0, 300, 180)); if (undoStack.length > undoMax) undoStack.shift(); }
+        function undo() { if (undoStack.length) { ctx.putImageData(undoStack.pop(), 0, 0); } }
         function getPos(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
-        function startDraw(e) { e.preventDefault(); drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
-        function moveDraw(e) {
-          e.preventDefault(); if (!drawing) return;
-          var p = getPos(e);
-          ctx.strokeStyle = document.getElementById('drawColor').value;
+        function setupCtx() {
+          var col = document.getElementById('drawColor').value;
+          ctx.strokeStyle = col;
+          ctx.fillStyle = col;
           ctx.lineWidth = +document.getElementById('drawSize').value;
+          ctx.globalAlpha = +document.getElementById('drawOpacity').value;
           ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-          ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y);
         }
-        function endDraw() { drawing = false; ctx.beginPath(); }
-        cv.addEventListener('mousedown', startDraw);
-        cv.addEventListener('mousemove', moveDraw);
-        cv.addEventListener('mouseup', endDraw);
-        cv.addEventListener('mouseleave', endDraw);
-        cv.addEventListener('touchstart', startDraw, { passive: false });
-        cv.addEventListener('touchmove', moveDraw, { passive: false });
-        cv.addEventListener('touchend', endDraw);
-        document.getElementById('btnDrawClear').addEventListener('click', function () { ctx.clearRect(0, 0, 300, 180); });
+        function onDown(e) {
+          e.preventDefault(); drawing = true; startP = getPos(e);
+          if (tool === 'pen' || tool === 'eraser') { saveState(); ctx.beginPath(); ctx.moveTo(startP.x, startP.y); }
+          if (tool === 'spray') saveState();
+        }
+        function onMove(e) {
+          e.preventDefault(); if (!drawing) return;
+          var p = getPos(e); setupCtx();
+          if (tool === 'pen') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+          } else if (tool === 'eraser') {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = +document.getElementById('drawSize').value * 3;
+            ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+            ctx.globalCompositeOperation = 'source-over';
+          } else if (tool === 'spray') {
+            var r = +document.getElementById('drawSize').value * 2;
+            for (var k = 0; k < 15; k++) {
+              var ox = (Math.random() - 0.5) * r, oy = (Math.random() - 0.5) * r;
+              ctx.fillRect(p.x + ox, p.y + oy, 1.5, 1.5);
+            }
+          } else {
+            ctx.clearRect(0, 0, 300, 180);
+            if (undoStack.length) ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+            ctx.beginPath();
+            if (tool === 'rect') {
+              var fill = document.getElementById('drawFill').checked;
+              if (fill) { ctx.fillRect(startP.x, startP.y, p.x - startP.x, p.y - startP.y); }
+              ctx.strokeRect(startP.x, startP.y, p.x - startP.x, p.y - startP.y);
+            } else if (tool === 'circle') {
+              var rx = Math.abs(p.x - startP.x) / 2, ry = Math.abs(p.y - startP.y) / 2;
+              var cx = (startP.x + p.x) / 2, cy = (startP.y + p.y) / 2;
+              var fill = document.getElementById('drawFill').checked;
+              ctx.ellipse(cx, cy, Math.max(rx, 1), Math.max(ry, 1), 0, 0, Math.PI * 2);
+              if (fill) ctx.fill(); ctx.stroke();
+            } else if (tool === 'line') {
+              ctx.moveTo(startP.x, startP.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+            }
+          }
+        }
+        function onUp(e) {
+          if (!drawing) return;
+          var p = getPos(e);
+          if (['rect', 'circle', 'line'].indexOf(tool) >= 0) { saveState(); onMove(e); }
+          drawing = false; ctx.beginPath(); startP = null;
+        }
+        cv.addEventListener('mousedown', onDown);
+        cv.addEventListener('mousemove', onMove);
+        cv.addEventListener('mouseup', onUp);
+        cv.addEventListener('mouseleave', onUp);
+        cv.addEventListener('touchstart', onDown, { passive: false });
+        cv.addEventListener('touchmove', onMove, { passive: false });
+        cv.addEventListener('touchend', onUp);
+
+        var toolBtns = document.querySelectorAll('.tool-btn');
+        for (var i = 0; i < toolBtns.length; i++) {
+          toolBtns[i].addEventListener('click', function () {
+            for (var j = 0; j < toolBtns.length; j++) toolBtns[j].classList.remove('active');
+            this.classList.add('active');
+            tool = this.getAttribute('data-tool');
+            cv.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+          });
+        }
+        document.getElementById('btnDrawUndo').addEventListener('click', undo);
+        document.getElementById('btnDrawClear').addEventListener('click', function () { saveState(); ctx.clearRect(0, 0, 300, 180); });
       })();
 
       /* ===================== RELOJ ===================== */
@@ -1175,9 +1247,16 @@
         var cv = c.cv, ctx = c.ctx;
         var CX = 150, CY = 90, R = 72;
         var digital = document.getElementById('digitalTime');
+        var tzSelect = document.getElementById('tzSelect');
+        function tzTime() {
+          var tz = tzSelect.value;
+          var str = new Date().toLocaleString('en-US', { timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          var parts = str.split(':');
+          return { h: +parts[0] % 12, m: +parts[1], s: +parts[2] + new Date().getMilliseconds() / 1000 };
+        }
         function drawClock() {
-          var now = new Date(), h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds() + now.getMilliseconds() / 1000;
-          digital.textContent = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          var t = tzTime();
+          digital.textContent = new Date().toLocaleString('en-US', { timeZone: tzSelect.value, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + tzSelect.value.split('/').pop();
           ctx.clearRect(0, 0, 300, 180);
           ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2);
           ctx.fillStyle = '#1a1a24'; ctx.strokeStyle = '#2a2a3e'; ctx.lineWidth = 2; ctx.fill(); ctx.stroke();
@@ -1188,13 +1267,13 @@
             ctx.strokeStyle = i % 3 === 0 ? '#e4e4ec' : '#9090aa'; ctx.lineWidth = i % 3 === 0 ? 2 : 1.5; ctx.stroke();
           }
           ctx.save(); ctx.translate(CX, CY);
-          var hAngle = (h + m / 60) * (Math.PI * 2 / 12) - Math.PI / 2;
+          var hAngle = (t.h + t.m / 60) * (Math.PI * 2 / 12) - Math.PI / 2;
           ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(hAngle) * 40, Math.sin(hAngle) * 40);
           ctx.strokeStyle = '#534AB7'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
-          var mAngle = (m + s / 60) * (Math.PI * 2 / 60) - Math.PI / 2;
+          var mAngle = (t.m + t.s / 60) * (Math.PI * 2 / 60) - Math.PI / 2;
           ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(mAngle) * 55, Math.sin(mAngle) * 55);
           ctx.strokeStyle = '#9090aa'; ctx.lineWidth = 2.5; ctx.stroke();
-          var sAngle = s * (Math.PI * 2 / 60) - Math.PI / 2;
+          var sAngle = t.s * (Math.PI * 2 / 60) - Math.PI / 2;
           ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(sAngle) * 62, Math.sin(sAngle) * 62);
           ctx.strokeStyle = '#D85A30'; ctx.lineWidth = 1.2; ctx.stroke();
           ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fillStyle = '#534AB7'; ctx.fill();
@@ -1305,6 +1384,18 @@
         var CELL = 12, COLS = Math.floor(300 / CELL), ROWS = Math.floor(240 / CELL);
         var snake, dir, nextDir, food, score, running = false, gameOver = false, timer = null;
         var scoreEl = document.getElementById('snakeScore');
+        var snakeAC = null;
+        function snakeSound(freq, dur) {
+          try {
+            if (!snakeAC) snakeAC = new (window.AudioContext || window.webkitAudioContext)();
+            var o = snakeAC.createOscillator(), g = snakeAC.createGain();
+            o.connect(g); g.connect(snakeAC.destination);
+            o.frequency.value = freq; o.type = 'square';
+            var t = snakeAC.currentTime;
+            g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+            o.start(t); o.stop(t + dur);
+          } catch (e) {}
+        }
 
         function reset() {
           snake = [{ x: 5, y: 7 }]; dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
@@ -1340,10 +1431,10 @@
           var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
           if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS || snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
-            gameOver = true; running = false; drawSnake(); scoreEl.textContent = 'Game Over - ' + score; return;
+            snakeSound(200, 0.3); gameOver = true; running = false; drawSnake(); scoreEl.textContent = 'Game Over - ' + score; return;
           }
           snake.unshift(head);
-          if (head.x === food.x && head.y === food.y) { score++; updateScore(); spawnFood(); }
+          if (head.x === food.x && head.y === food.y) { score++; snakeSound(880, 0.1); updateScore(); spawnFood(); }
           else { snake.pop(); }
           drawSnake();
           timer = setTimeout(gameLoop, 120);
@@ -1362,106 +1453,41 @@
         reset(); drawSnake();
       })();
 
-      /* ===================== EDITOR DE IMAGENES ===================== */
-      (function () {
-        var cv = document.getElementById('cImg');
-        if (!cv) return;
-        var ctx = cv.getContext('2d');
-        var originalData = null;
-
-        function drawDefault() {
-          ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, 300, 180);
-          ctx.fillStyle = '#9090aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText('Drag an image here', 150, 90);
-        }
-        drawDefault();
-
-        function loadImage(file) {
-          var reader = new FileReader();
-          reader.onload = function (e) {
-            var img = new Image();
-            img.onload = function () {
-              cv.width = 300; cv.height = 180;
-              ctx.drawImage(img, 0, 0, 300, 180);
-              originalData = ctx.getImageData(0, 0, 300, 180);
-              document.getElementById('imgHint').textContent = 'Image loaded — apply filters below';
-            };
-            img.src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
-
-        var dropzone = document.getElementById('dropzone');
-        dropzone.addEventListener('dragover', function (e) { e.preventDefault(); this.classList.add('dragover'); });
-        dropzone.addEventListener('dragleave', function () { this.classList.remove('dragover'); });
-        dropzone.addEventListener('drop', function (e) { e.preventDefault(); this.classList.remove('dragover'); if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]); });
-        document.getElementById('imgLink').addEventListener('click', function (e) { e.preventDefault(); document.getElementById('imgFile').click(); });
-        document.getElementById('imgFile').addEventListener('change', function () { if (this.files[0]) loadImage(this.files[0]); });
-
-        function applyFilter(fn) {
-          if (!originalData) return;
-          var imgData = ctx.getImageData(0, 0, 300, 180);
-          fn(imgData.data);
-          ctx.putImageData(imgData, 0, 0);
-        }
-
-        document.getElementById('btnGray').addEventListener('click', function () {
-          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; d[i] = d[i + 1] = d[i + 2] = g; } });
-        });
-        document.getElementById('btnSepia').addEventListener('click', function () {
-          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { var r = d[i], g = d[i + 1], b = d[i + 2]; d[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189); d[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168); d[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131); } });
-        });
-        document.getElementById('btnInvert').addEventListener('click', function () {
-          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; } });
-        });
-        document.getElementById('btnBright').addEventListener('click', function () {
-          applyFilter(function (d) { for (var i = 0; i < d.length; i += 4) { d[i] = Math.min(255, d[i] + 40); d[i + 1] = Math.min(255, d[i + 1] + 40); d[i + 2] = Math.min(255, d[i + 2] + 40); } });
-        });
-        document.getElementById('btnBlur').addEventListener('click', function () {
-          if (!originalData) return;
-          var src = ctx.getImageData(0, 0, 300, 180);
-          var w = 300, h = 180, r = 2;
-          for (var y = 0; y < h; y++) {
-            for (var x = 0; x < w; x++) {
-              var rr = 0, gg = 0, bb = 0, count = 0;
-              for (var dy = -r; dy <= r; dy++) {
-                for (var dx = -r; dx <= r; dx++) {
-                  var px = x + dx, py = y + dy;
-                  if (px >= 0 && px < w && py >= 0 && py < h) { var idx = (py * w + px) * 4; rr += src.data[idx]; gg += src.data[idx + 1]; bb += src.data[idx + 2]; count++; }
-                }
-              }
-              var i2 = (y * w + x) * 4; src.data[i2] = rr / count; src.data[i2 + 1] = gg / count; src.data[i2 + 2] = bb / count;
-            }
-          }
-          ctx.putImageData(src, 0, 0);
-        });
-        document.getElementById('btnImgReset').addEventListener('click', function () { if (originalData) ctx.putImageData(originalData, 0, 0); });
-      })();
-
       /* ===================== WEB SPEECH ===================== */
       (function () {
         var textarea = document.getElementById('speechText');
         var status = document.getElementById('speechStatus');
+        var btnListen = document.getElementById('btnSpeechListen');
         var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        var recognition = null;
+        var recognition = null, listening = false;
 
-        document.getElementById('btnSpeechListen').addEventListener('click', function () {
+        btnListen.addEventListener('click', function () {
+          if (listening) {
+            if (recognition) { recognition.stop(); recognition = null; }
+            listening = false;
+            btnListen.textContent = 'Microphone';
+            btnListen.disabled = false;
+            status.textContent = 'Stopped';
+            return;
+          }
           if (!SpeechRec) { status.textContent = 'API not supported in this browser'; return; }
-          recognition = new SpeechRec();
-          recognition.lang = 'es-AR';
-          recognition.interimResults = true;
-          recognition.continuous = true;
-          recognition.onresult = function (e) {
-            var transcript = '';
-            for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
-            textarea.value = transcript;
+          try {
+            recognition = new SpeechRec();
+            recognition.lang = 'es-AR';
+            recognition.interimResults = true;
+            recognition.continuous = true;
+            recognition.onresult = function (e) {
+              var transcript = '';
+              for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+              textarea.value = transcript;
+            };
+            recognition.onerror = function (e) { var msg = e.error || 'unknown'; status.textContent = 'Mic error: ' + msg; listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; };
+            recognition.onend = function () { if (listening) { listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; status.textContent = 'Listening ended — click again'; } };
+            recognition.start();
+            listening = true;
+            btnListen.textContent = 'Stop';
             status.textContent = 'Listening...';
-          };
-          recognition.onerror = function () { status.textContent = 'Error accessing microphone'; };
-          recognition.start();
-          this.textContent = 'Listening...';
-          this.disabled = true;
-          status.textContent = 'Microphone active — speak';
+          } catch (e) { status.textContent = 'Error: ' + e.message; }
         });
 
         document.getElementById('btnSpeechSpeak').addEventListener('click', function () {
