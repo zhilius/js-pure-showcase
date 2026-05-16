@@ -1065,7 +1065,24 @@
         if (!c) return;
         var cv = c.cv, ctx = c.ctx;
         var balls = [], grav = 0.4;
-        function addBall() { balls.push({ x: Math.random() * 280 + 10, y: 10, vx: (Math.random() - 0.5) * 4, vy: 0, r: Math.random() * 10 + 6, c: COLORS[balls.length % COLORS.length], e: 0.7 + Math.random() * 0.2 }); }
+        var physAC = null;
+        function bounceSound(b) {
+          var speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+          if (speed < 1) return;
+          try {
+            if (!physAC) physAC = new (window.AudioContext || window.webkitAudioContext)();
+            var o = physAC.createOscillator(), g = physAC.createGain();
+            o.connect(g); g.connect(physAC.destination);
+            o.frequency.value = 800 - b.r * 30;
+            o.type = 'triangle';
+            var t = physAC.currentTime;
+            var vol = Math.min(0.12, speed * 0.015);
+            g.gain.setValueAtTime(vol, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+            o.start(t); o.stop(t + 0.08);
+          } catch (e) {}
+        }
+        function addBall() { balls.push({ x: Math.random() * 280 + 10, y: 10, vx: (Math.random() - 0.5) * 4, vy: 0, r: Math.random() * 10 + 6, c: COLORS[balls.length % COLORS.length], e: 0.7 + Math.random() * 0.2, lastBounce: 0 }); }
         for (var i = 0; i < 5; i++) addBall();
         document.getElementById('btnBall').addEventListener('click', addBall);
         document.getElementById('btnClear').addEventListener('click', function () { balls.length = 0; });
@@ -1073,11 +1090,12 @@
         if (gravSlider) gravSlider.addEventListener('input', function (e) { grav = +e.target.value; });
         function physicsLoop() {
           ctx.clearRect(0, 0, 300, 180);
+          var now = Date.now();
           for (var i = 0; i < balls.length; i++) {
             var b = balls[i]; b.vy += grav; b.x += b.vx; b.y += b.vy;
-            if (b.x - b.r < 0) { b.x = b.r; b.vx *= -b.e; }
-            if (b.x + b.r > 300) { b.x = 300 - b.r; b.vx *= -b.e; }
-            if (b.y + b.r > 180) { b.y = 180 - b.r; b.vy *= -b.e; b.vx *= 0.98; if (Math.abs(b.vy) < 0.5) b.vy = 0; }
+            if (b.x - b.r < 0) { b.x = b.r; b.vx *= -b.e; if (now - b.lastBounce > 80) { bounceSound(b); b.lastBounce = now; } }
+            if (b.x + b.r > 300) { b.x = 300 - b.r; b.vx *= -b.e; if (now - b.lastBounce > 80) { bounceSound(b); b.lastBounce = now; } }
+            if (b.y + b.r > 180) { b.y = 180 - b.r; b.vy *= -b.e; b.vx *= 0.98; if (now - b.lastBounce > 80) { bounceSound(b); b.lastBounce = now; } if (Math.abs(b.vy) < 0.5) b.vy = 0; }
             ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fillStyle = b.c; ctx.fill();
             ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2); ctx.fillStyle = '#ffffff44'; ctx.fill();
           }
