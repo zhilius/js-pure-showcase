@@ -1485,7 +1485,7 @@
               for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
               textarea.value = transcript;
             };
-            recognition.onerror = function (e) { var msg = e.error || 'unknown'; status.textContent = 'Mic error: ' + msg; listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; };
+            recognition.onerror = function (e) { var msg = e.error || 'unknown'; if (msg === 'network') { status.textContent = 'SpeechRecognition requires a server (HTTPS) — not available on file://'; } else { status.textContent = 'Mic error: ' + msg; } listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; };
             recognition.onend = function () { if (listening) { listening = false; btnListen.textContent = 'Microphone'; btnListen.disabled = false; status.textContent = 'Listening ended — click again'; } };
             recognition.start();
             listening = true;
