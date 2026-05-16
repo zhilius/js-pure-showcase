@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Partículas interactivas — JS Pure Showcase</title>
-<meta name="description" content="Demo de partículas interactivas con Canvas 2D, requestAnimationFrame y detección de distancia.">
+<title>Interactive Particles — JS Pure Showcase</title>
+<meta name="description" content="Interactive particles demo using Canvas 2D, requestAnimationFrame, and distance detection.">
 <style>
 :root{--bg:#0f0f13;--surface:#1a1a24;--border:#2a2a3e;--text:#e4e4ec;--text2:#b0b0c8;--purple:#534AB7;--teal:#1D9E75;--coral:#D85A30;--link:#a78bfa;--radius:12px;--ring:0 0 0 3px rgba(83,74,183,0.6)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -28,14 +28,14 @@ footer{text-align:center;padding:1.5rem;font-size:.78rem;color:var(--text2);bord
 </style>
 </head>
 <body>
-<header><h1>Partículas interactivas</h1><p class="back-link"><a href="../index.html">← Volver al showcase</a></p></header>
+<header><h1>Interactive Particles</h1><p class="back-link"><a href="../index.html">← Back to showcase</a></p></header>
 <main>
-<h2>Qué enseña</h2>
-<p><span class="tag">Canvas 2D</span><span class="tag">requestAnimationFrame</span><span class="tag">Mouse Events</span><span class="tag">Touch Events</span><span class="tag">Detección de distancia</span></p>
-<p>80 partículas que se repelen del cursor y dibujan conexiones entre sí cuando están cerca. Demuestra renderizado eficiente con <code>requestAnimationFrame</code>, detección de distancia con <code>Math.sqrt</code>, coordenadas relativas con <code>getBoundingClientRect()</code> y soporte táctil con <code>touchmove</code>.</p>
+<h2>What It Teaches</h2>
+<p><span class="tag">Canvas 2D</span><span class="tag">requestAnimationFrame</span><span class="tag">Mouse Events</span><span class="tag">Touch Events</span><span class="tag">Distance Detection</span></p>
+    <p>80 particles that repel from the cursor and draw connections between each other when close. Demonstrates efficient rendering with <code>requestAnimationFrame</code>, distance detection with <code>Math.sqrt</code>, relative coordinates with <code>getBoundingClientRect()</code>, and touch support with <code>touchmove</code>.</p>
 
-<h2>Cómo funciona</h2>
-<p>Cada partícula tiene posición (x, y), velocidad (vx, vy), radio y color. En cada frame:</p>
+<h2>How It Works</h2>
+    <p>Each particle has a position (x, y), velocity (vx, vy), radius, and color. On each frame:</p>
 <pre>for (var i = 0; i &lt; particles.length; i++) {
   var p = particles[i];
   var dx = mouse.x - p.x, dy = mouse.y - p.y;
@@ -47,19 +47,19 @@ footer{text-align:center;padding:1.5rem;font-size:.78rem;color:var(--text2);bord
   }
   p.vx *= 0.96; p.vy *= 0.96;
   p.x += p.vx; p.y += p.vy;
-  /* dibujar conexiones con vecinos cercanos */
+  /* draw connections with nearby neighbors */
 }</pre>
-<p>Si la distancia al mouse es menor a 60px, la partícula es empujada en dirección opuesta con una fuerza inversamente proporcional a la distancia. La fricción (×0.96) frena el movimiento gradualmente. Entre partículas se dibujan líneas si están a menos de 60px entre sí.</p>
+    <p>If the distance to the mouse is less than 60px, the particle is pushed in the opposite direction with a force inversely proportional to the distance. Friction (×0.96) gradually slows the movement. Lines are drawn between particles if they are within 60px of each other.</p>
 
-<h2>APIs de JavaScript utilizadas</h2>
+<h2>JavaScript APIs Used</h2>
 <ul>
-<li><strong>CanvasRenderingContext2D</strong> — <code>arc()</code>, <code>fillRect()</code>, <code>moveTo()</code>/<code>lineTo()</code> para dibujar partículas y conexiones</li>
-<li><strong>requestAnimationFrame</strong> — Loop de animación sincronizado con el refresco del monitor</li>
-<li><strong>MouseEvent</strong> — <code>mousemove</code> y <code>mouseleave</code> con <code>getBoundingClientRect()</code> para coordenadas relativas</li>
-<li><strong>TouchEvent</strong> — <code>touchmove</code> y <code>touchend</code> con <code>e.touches[0]</code> para soporte móvil</li>
-<li><strong>Math</strong> — <code>Math.sqrt()</code>, <code>Math.random()</code>, <code>Math.sin()</code> para movimiento y colores</li>
+<li><strong>CanvasRenderingContext2D</strong> — <code>arc()</code>, <code>fillRect()</code>, <code>moveTo()</code>/<code>lineTo()</code> for drawing particles and connections</li>
+<li><strong>requestAnimationFrame</strong> — Animation loop synchronized with the display refresh rate</li>
+<li><strong>MouseEvent</strong> — <code>mousemove</code> and <code>mouseleave</code> with <code>getBoundingClientRect()</code> for relative coordinates</li>
+<li><strong>TouchEvent</strong> — <code>touchmove</code> and <code>touchend</code> with <code>e.touches[0]</code> for mobile support</li>
+<li><strong>Math</strong> — <code>Math.sqrt()</code>, <code>Math.random()</code>, <code>Math.sin()</code> for movement and colors</li>
 </ul>
 </main>
-<footer><a href="../index.html">← Volver al showcase</a></footer>
+<footer><a href="../index.html">← Back to showcase</a></footer>
 </body>
 </html>

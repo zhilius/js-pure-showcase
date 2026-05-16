@@ -1,29 +1,29 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JS Pure Showcase — Demos interactivas de JavaScript puro</title>
-  <meta name="description" content="Explorá el poder de JavaScript puro: partículas interactivas, visualizador de audio, algoritmos de ordenamiento, simulación física, fractal de Mandelbrot, Juego de la Vida, dibujo libre y reloj analógico.">
-  <meta name="keywords" content="javascript, canvas, interactive demos, particles, audio visualization, sorting algorithms, physics simulation, mandelbrot, game of life, drawing, clock">
+  <title>JS Pure Showcase — Pure JavaScript Interactive Demos</title>
+  <meta name="description" content="Explore the power of pure JavaScript: interactive particles, audio visualizer, sorting algorithms, physics simulation, Mandelbrot fractal, Game of Life, drawing pad, analog clock, and more.">
+  <meta name="keywords" content="javascript, canvas, interactive demos, particles, audio visualization, sorting algorithms, physics simulation, mandelbrot, game of life, drawing, clock, matrix, calculator, snake, web speech, fetch api">
   <meta name="author" content="zhilius">
   <link rel="canonical" href="https://zhilius.github.io/js-pure-showcase/">
 
-  <meta property="og:title" content="JS Pure Showcase — JavaScript puro sin frameworks">
-  <meta property="og:description" content="Demos interactivas de JavaScript puro: partículas, audio, algoritmos, física, Mandelbrot, Conway, dibujo y reloj.">
+  <meta property="og:title" content="JS Pure Showcase — Pure JavaScript, Zero Frameworks">
+  <meta property="og:description" content="Interactive demos of pure JavaScript: particles, audio, algorithms, physics, Mandelbrot, Conway, drawing, clock and more.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://zhilius.github.io/js-pure-showcase/">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="JS Pure Showcase">
-  <meta name="twitter:description" content="Demos interactivas de JavaScript puro sin frameworks.">
+<meta name="twitter:title" content="JS Pure Showcase — Pure JavaScript, Zero Frameworks">
+<meta name="twitter:description" content="Interactive demos of pure JavaScript: particles, audio, algorithms, physics, Mandelbrot, Conway, drawing, clock and more.">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "JS Pure Showcase",
-    "description": "Showcase interactivo de JavaScript puro con 8 demos en canvas",
+    "name": "JS Pure Showcase — Pure JavaScript Interactive Demos",
+    "description": "Interactive showcase of pure JavaScript demos with canvas, audio, physics, algorithms, and more",
     "applicationCategory": "EducationalApplication",
     "browserRequirements": "Requires JavaScript",
     "author": { "@type": "Person", "name": "zhilius" }
@@ -228,6 +228,10 @@
       color: #fff;
       border-color: var(--color-purple);
     }
+
+    .algo-group { display: flex; gap: 3px; flex-wrap: wrap; }
+    .algo-btn { font-size: 0.68rem; padding: 3px 8px; cursor: pointer; border-radius: 4px; border: 0.5px solid var(--color-border); background: var(--color-surface); color: var(--color-text); transition: all 0.15s; }
+    .algo-btn.active { background: var(--color-purple); color: #fff; border-color: var(--color-purple); }
 
     input[type="color"] {
       width: 32px;
@@ -449,88 +453,93 @@
 </head>
 <body>
 
-  <a href="#main" class="skip-link">Ir al contenido principal</a>
+  <a href="#main" class="skip-link">Skip to content</a>
 
   <header role="banner">
     <h1>JS Pure Showcase</h1>
-    <p>Demostración del poder de <strong>JavaScript puro</strong>: canvas, física, audio, algoritmos y manipulación del DOM en tiempo real, sin frameworks ni librerías externas.</p>
+    <p>A showcase of <strong>pure JavaScript</strong>: canvas, physics, audio, algorithms, and real-time DOM manipulation, with no frameworks or external libraries.</p>
   </header>
 
-  <main id="main" role="main" aria-label="Contenido principal con demos interactivas">
+  <main id="main" role="main" aria-label="Main content with interactive demos">
 
-    <section class="grid" aria-label="Demos interactivas">
+    <section class="grid" aria-label="Interactive demos">
 
       <article class="card" aria-labelledby="particles-heading">
-        <h2 id="particles-heading"><a href="demos/particles.html" class="demo-link">Partículas interactivas</a></h2>
-        <canvas id="cParticles" width="300" height="160" style="aspect-ratio:300/160" role="img" aria-label="Canvas con partículas que reaccionan al movimiento del mouse"></canvas>
-        <p class="hint">Mové el mouse sobre el canvas para interactuar con las partículas</p>
+        <h2 id="particles-heading"><a href="demos/particles.html" class="demo-link">Interactive Particles</a></h2>
+        <canvas id="cParticles" width="300" height="160" style="aspect-ratio:300/160" role="img" aria-label="Canvas with particles that react to mouse movement"></canvas>
+        <p class="hint">Move the mouse over the canvas to interact with the particles</p>
       </article>
 
       <article class="card" aria-labelledby="audio-heading">
-        <h2 id="audio-heading"><a href="demos/audio.html" class="demo-link">Visualizador de audio</a></h2>
-        <canvas id="cAudio" width="300" height="160" style="aspect-ratio:300/160" role="img" aria-label="Visualizador de audio en tiempo real"></canvas>
+        <h2 id="audio-heading"><a href="demos/audio.html" class="demo-link">Audio Visualizer</a></h2>
+        <canvas id="cAudio" width="300" height="160" style="aspect-ratio:300/160" role="img" aria-label="Real-time audio visualizer"></canvas>
         <div class="row">
-          <button id="btnAudio" aria-label="Activar micrófono para visualizar audio en tiempo real">Activar micrófono</button>
-          <button id="btnSynth" aria-label="Tocar una secuencia de notas musicales">Tocar nota</button>
+          <button id="btnAudio" aria-label="Activate microphone for real-time audio visualization">Activate Microphone</button>
+          <button id="btnSynth" aria-label="Play a sequence of musical notes">Play Note</button>
         </div>
       </article>
 
       <article class="card full" aria-labelledby="sort-heading">
-        <h2 id="sort-heading"><a href="demos/sort.html" class="demo-link">Algoritmos de ordenamiento — Bubble sort vs Quick sort</a></h2>
-        <canvas id="cSort" width="620" height="120" style="aspect-ratio:620/120" role="img" aria-label="Visualización de algoritmos de ordenamiento en vivo"></canvas>
+        <h2 id="sort-heading"><a href="demos/sort.html" class="demo-link">Sorting Algorithms — Bubble, Quick, Selection, Insertion & Merge</a></h2>
+        <canvas id="cSort" width="620" height="120" style="aspect-ratio:620/120" role="img" aria-label="Live sorting algorithm visualization"></canvas>
         <div class="row">
-          <button id="btnSort" aria-label="Iniciar ordenamiento de barras">Ordenar</button>
-          <button id="btnShuffle" aria-label="Mezclar las barras aleatoriamente">Mezclar</button>
-          <button id="btnAlgo" class="active" aria-label="Cambiar entre Bubble Sort y Quick Sort">Bubble sort</button>
-          <span id="sortStatus" role="status" aria-live="polite">Listo</span>
-          <label>
-            Velocidad
-            <input type="range" id="sortSpeed" min="1" max="20" value="8" step="1" aria-label="Velocidad del algoritmo de ordenamiento">
-          </label>
+          <div class="algo-group" role="radiogroup" aria-label="Sorting algorithm">
+            <button data-algo="bubble" class="algo-btn active">Bubble</button>
+            <button data-algo="quick" class="algo-btn">Quick</button>
+            <button data-algo="selection" class="algo-btn">Selection</button>
+            <button data-algo="insertion" class="algo-btn">Insertion</button>
+            <button data-algo="merge" class="algo-btn">Merge</button>
+          </div>
+          <span id="sortStatus" role="status" aria-live="polite">Ready</span>
+        </div>
+        <div class="row">
+          <button id="btnSort" aria-label="Start sorting bars">Sort</button>
+          <button id="btnShuffle" aria-label="Shuffle bars randomly">Shuffle</button>
+          <label>Speed <input type="range" id="sortSpeed" min="1" max="20" value="8" step="1" aria-label="Sorting algorithm speed"></label>
         </div>
       </article>
 
       <article class="card" aria-labelledby="physics-heading">
-        <h2 id="physics-heading"><a href="demos/physics.html" class="demo-link">Simulación de física — gravedad y rebote</a></h2>
-        <canvas id="cPhysics" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Simulación de bolas con gravedad y rebotes"></canvas>
+        <h2 id="physics-heading"><a href="demos/physics.html" class="demo-link">Physics Simulation — Gravity and Bounce</a></h2>
+        <canvas id="cPhysics" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Ball simulation with gravity and bounces"></canvas>
         <div class="row">
-          <button id="btnBall" aria-label="Agregar una bola nueva a la simulación">Agregar bola</button>
-          <button id="btnClear" aria-label="Limpiar todas las bolas de la simulación">Limpiar</button>
+          <button id="btnBall" aria-label="Add a new ball to the simulation">Add Ball</button>
+          <button id="btnClear" aria-label="Clear all balls from the simulation">Clear</button>
           <label>
-            Gravedad
-            <input type="range" id="gravSlider" min="0.05" max="1" value="0.4" step="0.05" aria-label="Control de gravedad de la simulación">
+            Gravity
+            <input type="range" id="gravSlider" min="0.05" max="1" value="0.4" step="0.05" aria-label="Simulation gravity control">
           </label>
         </div>
       </article>
 
       <article class="card" aria-labelledby="mandel-heading">
-        <h2 id="mandel-heading"><a href="demos/mandelbrot.html" class="demo-link">Fractal de Mandelbrot</a></h2>
-        <canvas id="cMandel" width="300" height="180" role="img" aria-label="Fractal de Mandelbrot renderizado en tiempo real" style="aspect-ratio:300/180;cursor:zoom-in"></canvas>
+        <h2 id="mandel-heading"><a href="demos/mandelbrot.html" class="demo-link">Mandelbrot Fractal</a></h2>
+        <canvas id="cMandel" width="300" height="180" role="img" aria-label="Mandelbrot fractal rendered in real-time" style="aspect-ratio:300/180;cursor:zoom-in"></canvas>
         <div class="row">
-          <button id="btnReset" aria-label="Resetear la vista del fractal">Reset</button>
-          <span class="hint">Click para hacer zoom</span>
+          <button id="btnReset" aria-label="Reset the fractal view">Reset</button>
+          <span class="hint">Click to zoom</span>
         </div>
       </article>
 
       <article class="card" aria-labelledby="draw-heading">
-        <h2 id="draw-heading"><a href="demos/draw.html" class="demo-link">Dibujo libre</a></h2>
-        <canvas id="cDraw" width="300" height="180" style="aspect-ratio:300/180;cursor:crosshair" role="img" aria-label="Lienzo para dibujar libremente"></canvas>
+        <h2 id="draw-heading"><a href="demos/draw.html" class="demo-link">Free Drawing</a></h2>
+        <canvas id="cDraw" width="300" height="180" style="aspect-ratio:300/180;cursor:crosshair" role="img" aria-label="Canvas for free drawing"></canvas>
         <div class="row">
           <label>
             Color
-            <input type="color" id="drawColor" value="#534AB7" aria-label="Color del pincel">
+            <input type="color" id="drawColor" value="#534AB7" aria-label="Brush color">
           </label>
           <label>
-            Tamaño
-            <input type="range" id="drawSize" min="1" max="20" value="4" step="1" aria-label="Tamaño del pincel">
+            Size
+            <input type="range" id="drawSize" min="1" max="20" value="4" step="1" aria-label="Brush size">
           </label>
-          <button id="btnDrawClear" aria-label="Limpiar el dibujo">Limpiar</button>
+          <button id="btnDrawClear" aria-label="Clear the drawing">Clear</button>
         </div>
       </article>
 
       <article class="card" aria-labelledby="clock-heading">
-        <h2 id="clock-heading"><a href="demos/clock.html" class="demo-link">Reloj analógico</a></h2>
-        <canvas id="cClock" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Reloj analógico mostrando la hora actual"></canvas>
+        <h2 id="clock-heading"><a href="demos/clock.html" class="demo-link">Analog Clock</a></h2>
+        <canvas id="cClock" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Analog clock showing the current time"></canvas>
         <div class="row">
           <span id="digitalTime" aria-live="polite" style="font-size:0.9rem;font-variant-numeric:tabular-nums;color:var(--color-text)"></span>
         </div>
@@ -538,96 +547,96 @@
 
       <article class="card" aria-labelledby="matrix-heading">
         <h2 id="matrix-heading"><a href="demos/matrix.html" class="demo-link">Matrix Rain</a></h2>
-        <canvas id="cMatrix" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Lluvia digital estilo Matrix cayendo"></canvas>
-        <p class="hint">Lluvia de caracteres katakana — efecto visual continuo</p>
+        <canvas id="cMatrix" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Digital Matrix-style rain falling"></canvas>
+        <p class="hint">Katakana character rain — continuous visual effect</p>
       </article>
 
       <article class="card" aria-labelledby="calc-heading">
-        <h2 id="calc-heading"><a href="demos/calc.html" class="demo-link">Calculadora</a></h2>
-        <div class="calc-display" id="calcDisplay" role="status" aria-live="polite" aria-label="Resultado de la calculadora">0</div>
+        <h2 id="calc-heading"><a href="demos/calc.html" class="demo-link">Calculator</a></h2>
+        <div class="calc-display" id="calcDisplay" role="status" aria-live="polite" aria-label="Calculator result">0</div>
         <div class="calc-grid">
-          <button class="calc-num" aria-label="Siete">7</button>
-          <button class="calc-num" aria-label="Ocho">8</button>
-          <button class="calc-num" aria-label="Nueve">9</button>
-          <button class="calc-op" aria-label="Dividir">/</button>
-          <button class="calc-num" aria-label="Cuatro">4</button>
-          <button class="calc-num" aria-label="Cinco">5</button>
-          <button class="calc-num" aria-label="Seis">6</button>
-          <button class="calc-op" aria-label="Multiplicar">*</button>
-          <button class="calc-num" aria-label="Uno">1</button>
-          <button class="calc-num" aria-label="Dos">2</button>
-          <button class="calc-num" aria-label="Tres">3</button>
-          <button class="calc-op" aria-label="Restar">-</button>
-          <button id="calcClear" aria-label="Limpiar">C</button>
-          <button class="calc-num" aria-label="Cero">0</button>
-          <button id="calcEq" class="calc-eq" aria-label="Igual">=</button>
-          <button class="calc-op" aria-label="Sumar">+</button>
+          <button class="calc-num" aria-label="Seven">7</button>
+          <button class="calc-num" aria-label="Eight">8</button>
+          <button class="calc-num" aria-label="Nine">9</button>
+          <button class="calc-op" aria-label="Divide">/</button>
+          <button class="calc-num" aria-label="Four">4</button>
+          <button class="calc-num" aria-label="Five">5</button>
+          <button class="calc-num" aria-label="Six">6</button>
+          <button class="calc-op" aria-label="Multiply">*</button>
+          <button class="calc-num" aria-label="One">1</button>
+          <button class="calc-num" aria-label="Two">2</button>
+          <button class="calc-num" aria-label="Three">3</button>
+          <button class="calc-op" aria-label="Subtract">-</button>
+          <button id="calcClear" aria-label="Clear">C</button>
+          <button class="calc-num" aria-label="Zero">0</button>
+          <button id="calcEq" class="calc-eq" aria-label="Equals">=</button>
+          <button class="calc-op" aria-label="Add">+</button>
         </div>
       </article>
 
       <article class="card full" aria-labelledby="snake-heading">
         <h2 id="snake-heading"><a href="demos/snake.html" class="demo-link">Snake Game</a></h2>
-        <canvas id="cSnake" width="300" height="240" style="aspect-ratio:300/240" role="img" aria-label="Juego de la serpiente" tabindex="0"></canvas>
+        <canvas id="cSnake" width="300" height="240" style="aspect-ratio:300/240" role="img" aria-label="Snake game" tabindex="0"></canvas>
         <div class="row">
-          <button id="btnSnakeStart" aria-label="Iniciar o reiniciar el juego">Iniciar</button>
-          <span id="snakeScore" role="status" aria-live="polite" class="hint">Usá las flechas del teclado</span>
+          <button id="btnSnakeStart" aria-label="Start or restart the game">Start</button>
+          <span id="snakeScore" role="status" aria-live="polite" class="hint">Use the arrow keys</span>
         </div>
       </article>
 
       <article class="card full" aria-labelledby="img-heading">
-        <h2 id="img-heading"><a href="demos/img-editor.html" class="demo-link">Editor de imágenes — File API + TypedArrays</a></h2>
+        <h2 id="img-heading"><a href="demos/img-editor.html" class="demo-link">Image Editor — File API + TypedArrays</a></h2>
         <div class="img-dropzone" id="dropzone">
-          <canvas id="cImg" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Editor de imágenes con filtros"></canvas>
-          <p class="hint" id="imgHint">Arrastrá una imagen acá o <a href="#" id="imgLink">seleccioná un archivo</a></p>
+          <canvas id="cImg" width="300" height="180" style="aspect-ratio:300/180" role="img" aria-label="Image editor with filters"></canvas>
+          <p class="hint" id="imgHint">Drag an image here or <a href="#" id="imgLink">select a file</a></p>
           <input type="file" id="imgFile" accept="image/*" hidden>
         </div>
         <div class="row">
-          <button id="btnGray" aria-label="Filtro escala de grises">Grises</button>
-          <button id="btnSepia" aria-label="Filtro sepia">Sepia</button>
-          <button id="btnInvert" aria-label="Filtro invertir colores">Invertir</button>
-          <button id="btnBright" aria-label="Filtro brillo +40">+Brillo</button>
-          <button id="btnBlur" aria-label="Filtro desenfoque">Blur</button>
-          <button id="btnImgReset" aria-label="Restaurar original">Original</button>
+          <button id="btnGray" aria-label="Grayscale filter">Grayscale</button>
+          <button id="btnSepia" aria-label="Sepia filter">Sepia</button>
+          <button id="btnInvert" aria-label="Invert colors filter">Invert</button>
+          <button id="btnBright" aria-label="Brightness +40 filter">+Brightness</button>
+          <button id="btnBlur" aria-label="Blur filter">Blur</button>
+          <button id="btnImgReset" aria-label="Restore original">Original</button>
         </div>
       </article>
 
       <article class="card" aria-labelledby="speech-heading">
-        <h2 id="speech-heading"><a href="demos/speech.html" class="demo-link">Web Speech — reconocimiento y síntesis</a></h2>
-        <textarea id="speechText" rows="3" aria-label="Texto para dictado o lectura" placeholder="Escribí algo o usá el micrófono..."></textarea>
+        <h2 id="speech-heading"><a href="demos/speech.html" class="demo-link">Web Speech — Recognition and Synthesis</a></h2>
+        <textarea id="speechText" rows="3" aria-label="Text for dictation or reading" placeholder="Type something or use the microphone..."></textarea>
         <div class="row">
-          <button id="btnSpeechListen" aria-label="Activar reconocimiento de voz">Micrófono</button>
-          <button id="btnSpeechSpeak" aria-label="Leer el texto en voz alta">Leer texto</button>
-          <span class="hint" id="speechStatus">Presioná Micrófono y hablá</span>
+          <button id="btnSpeechListen" aria-label="Activate voice recognition">Microphone</button>
+          <button id="btnSpeechSpeak" aria-label="Read text aloud">Read Text</button>
+          <span class="hint" id="speechStatus">Press Microphone and speak</span>
         </div>
       </article>
 
       <article class="card" aria-labelledby="gen-heading">
-        <h2 id="gen-heading"><a href="demos/gen-proxy.html" class="demo-link">Generators + Proxy — meta-programación ES6</a></h2>
+        <h2 id="gen-heading"><a href="demos/gen-proxy.html" class="demo-link">Generators + Proxy — ES6 Metaprogramming</a></h2>
         <div class="gen-display" id="genDisplay">[0]</div>
         <div class="row">
-          <button id="btnGenNext" aria-label="Obtener siguiente número de Fibonacci">Siguiente</button>
-          <button id="btnGenReset" aria-label="Reiniciar secuencia">Reiniciar</button>
-          <span class="hint" id="genStatus">Generator + Proxy interceptando</span>
+          <button id="btnGenNext" aria-label="Get next Fibonacci number">Next</button>
+          <button id="btnGenReset" aria-label="Reset sequence">Reset</button>
+          <span class="hint" id="genStatus">Generator + Proxy intercepting</span>
         </div>
       </article>
 
       <article class="card full" aria-labelledby="fetch-heading">
-        <h2 id="fetch-heading"><a href="demos/fetch.html" class="demo-link">Fetch API + Promises — datos asincrónicos</a></h2>
+        <h2 id="fetch-heading"><a href="demos/fetch.html" class="demo-link">Fetch API + Promises — Asynchronous Data</a></h2>
         <div class="row">
-          <button id="btnFetch" aria-label="Obtener usuarios desde API externa">Obtener usuarios</button>
-          <span class="hint" id="fetchStatus">Cargá datos de JSONPlaceholder API</span>
+          <button id="btnFetch" aria-label="Fetch users from external API">Fetch Users</button>
+          <span class="hint" id="fetchStatus">Load data from JSONPlaceholder API</span>
         </div>
         <div id="fetchResults" aria-live="polite"></div>
       </article>
 
       <article class="card full" aria-labelledby="life-heading">
-        <h2 id="life-heading"><a href="demos/life.html" class="demo-link">Autómata celular — Juego de la Vida de Conway</a></h2>
-        <canvas id="cLife" width="620" height="140" style="aspect-ratio:620/140" role="img" aria-label="Juego de la Vida de Conway en ejecución"></canvas>
+        <h2 id="life-heading"><a href="demos/life.html" class="demo-link">Cellular Automaton — Conway's Game of Life</a></h2>
+        <canvas id="cLife" width="620" height="140" style="aspect-ratio:620/140" role="img" aria-label="Conway's Game of Life in execution"></canvas>
         <div class="row">
-          <button id="btnLifePlay" aria-label="Pausar o reanudar la simulación" aria-pressed="false">Pausar</button>
-          <button id="btnLifeRand" aria-label="Aleatorizar el tablero del Juego de la Vida">Aleatorizar</button>
-          <button id="btnLifeClear" aria-label="Limpiar el tablero">Limpiar</button>
-          <span class="hint">Click en el canvas para dibujar células vivas</span>
+          <button id="btnLifePlay" aria-label="Pause or resume the simulation" aria-pressed="false">Pause</button>
+          <button id="btnLifeRand" aria-label="Randomize the Game of Life board">Randomize</button>
+          <button id="btnLifeClear" aria-label="Clear the board">Clear</button>
+          <span class="hint">Click on the canvas to draw living cells</span>
         </div>
       </article>
 
@@ -635,7 +644,7 @@
   </main>
 
   <footer role="contentinfo">
-    <p>Creado con <span aria-label="JavaScript puro, sin frameworks">JS puro</span> por <a href="https://github.com/zhilius">zhilius</a></p>
+    <p>Created with <span aria-label="Pure JavaScript, no frameworks">plain JS</span> by <a href="https://github.com/zhilius">zhilius</a></p>
   </footer>
 
   <script>
@@ -695,8 +704,10 @@
               p.vy -= (dy / dist) * force * 0.8;
             }
             p.vx *= 0.96; p.vy *= 0.96; p.x += p.vx; p.y += p.vy;
-            if (p.x < 0 || p.x > 300) p.vx *= -1;
-            if (p.y < 0 || p.y > 160) p.vy *= -1;
+            if (p.x < p.r) { p.x = p.r; p.vx *= -1.5; }
+            if (p.x > 300 - p.r) { p.x = 300 - p.r; p.vx *= -1.5; }
+            if (p.y < p.r) { p.y = p.r; p.vy *= -1.5; }
+            if (p.y > 160 - p.r) { p.y = 160 - p.r; p.vy *= -1.5; }
             for (var j = i + 1; j < particles.length; j++) {
               var q = particles[j];
               var dx2 = q.x - p.x, dy2 = q.y - p.y;
@@ -740,7 +751,7 @@
             analyser = audioCtx.createAnalyser(); analyser.fftSize = 128;
             src.connect(analyser);
             dataArr = new Uint8Array(analyser.frequencyBinCount);
-            this.textContent = 'Microfono activo';
+            this.textContent = 'Microphone active';
             this.setAttribute('aria-pressed', 'true');
             micActive = true;
             function loop() {
@@ -755,7 +766,7 @@
               animId = requestAnimationFrame(loop);
             }
             loop();
-          } catch (e) { this.textContent = 'Sin permiso'; }
+          } catch (e) { this.textContent = 'No permission'; }
         });
         document.getElementById('btnSynth').addEventListener('click', function () {
           try {
@@ -780,8 +791,22 @@
         var cv = c.cv, ctx = c.ctx;
         var N = 60, W = 620, H = 120;
         var arr = [], comparing = [], sorted = [], running = false, currentAlgo = 'bubble';
+        var sortAC = null;
+        function sortSound(val) {
+          try {
+            if (!sortAC) sortAC = new (window.AudioContext || window.webkitAudioContext)();
+            var o = sortAC.createOscillator(), g = sortAC.createGain();
+            o.connect(g); g.connect(sortAC.destination);
+            o.frequency.value = 200 + (val / N) * 700;
+            o.type = 'sine';
+            var t = sortAC.currentTime;
+            g.gain.setValueAtTime(0.05, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            o.start(t); o.stop(t + 0.05);
+          } catch (e) {}
+        }
         function initArr() { arr = Array.from({ length: N }, function (_, i) { return i + 1; }); sorted = []; comparing = []; }
-        function shuffle() { if (running) return; for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } sorted = []; comparing = []; draw(); document.getElementById('sortStatus').textContent = 'Mezclado'; }
+        function shuffle() { if (running) return; for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; } sorted = []; comparing = []; draw(); document.getElementById('sortStatus').textContent = 'Shuffled'; }
         function draw() {
           ctx.clearRect(0, 0, W, H); var w = W / N;
           for (var i = 0; i < N; i++) {
@@ -791,18 +816,20 @@
           }
         }
         function getSpeed() { return 21 - +document.getElementById('sortSpeed').value; }
+        function sleep() { return new Promise(function (r) { setTimeout(r, getSpeed()); }); }
         async function bubbleSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Bubble sort...';
           for (var i = 0; i < arr.length; i++) {
             for (var j = 0; j < arr.length - i - 1; j++) {
               comparing = [j, j + 1]; draw();
-              await new Promise(function (r) { setTimeout(r, getSpeed()); });
+              sortSound(arr[j] > arr[j + 1] ? arr[j + 1] : arr[j]);
+              await sleep();
               if (arr[j] > arr[j + 1]) { var t = arr[j]; arr[j] = arr[j + 1]; arr[j + 1] = t; }
             }
             sorted.push(arr.length - 1 - i);
           }
           comparing = []; sorted = arr.map(function (_, i) { return i; }); draw();
-          document.getElementById('sortStatus').textContent = 'Completado'; running = false;
+          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
         }
         async function quickSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Quick sort...';
@@ -811,7 +838,8 @@
             for (var j = lo; j < hi; j++) {
               if (!running) return -1;
               comparing = [j, hi]; draw();
-              await new Promise(function (r) { setTimeout(r, getSpeed()); });
+              sortSound(arr[j]);
+              await sleep();
               if (arr[j] <= pivot) { i++; var t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
             }
             var t = arr[i + 1]; arr[i + 1] = arr[hi]; arr[hi] = t;
@@ -825,18 +853,90 @@
           }
           await sort(0, arr.length - 1);
           sorted = arr.map(function (_, i) { return i; }); comparing = []; draw();
-          document.getElementById('sortStatus').textContent = 'Completado'; running = false;
+          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+        }
+        async function selectionSort() {
+          running = true; document.getElementById('sortStatus').textContent = 'Selection sort...';
+          for (var i = 0; i < N - 1; i++) {
+            var minIdx = i;
+            for (var j = i + 1; j < N; j++) {
+              comparing = [j, minIdx]; draw();
+              sortSound(arr[j]);
+              await sleep();
+              if (arr[j] < arr[minIdx]) minIdx = j;
+            }
+            if (minIdx !== i) { var t = arr[i]; arr[i] = arr[minIdx]; arr[minIdx] = t; }
+            sorted.push(i);
+          }
+          sorted.push(N - 1);
+          comparing = []; draw();
+          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+        }
+        async function insertionSort() {
+          running = true; document.getElementById('sortStatus').textContent = 'Insertion sort...';
+          sorted.push(0);
+          for (var i = 1; i < N; i++) {
+            var key = arr[i], j = i - 1;
+            while (j >= 0 && arr[j] > key) {
+              comparing = [j, j + 1]; draw();
+              sortSound(arr[j]);
+              await sleep();
+              arr[j + 1] = arr[j]; j--;
+            }
+            arr[j + 1] = key;
+            sorted.push(i);
+          }
+          comparing = []; sorted = arr.map(function (_, i) { return i; }); draw();
+          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
+        }
+        async function mergeSort() {
+          running = true; document.getElementById('sortStatus').textContent = 'Merge sort...';
+          async function merge(lo, mid, hi) {
+            var temp = [], i = lo, j = mid + 1;
+            while (i <= mid && j <= hi) {
+              comparing = [i, j]; draw();
+              sortSound(arr[i] < arr[j] ? arr[i] : arr[j]);
+              await sleep();
+              if (!running) return;
+              if (arr[i] <= arr[j]) { temp.push(arr[i]); i++; }
+              else { temp.push(arr[j]); j++; }
+            }
+            while (i <= mid) temp.push(arr[i++]);
+            while (j <= hi) temp.push(arr[j++]);
+            for (var k = 0; k < temp.length; k++) {
+              arr[lo + k] = temp[k];
+              comparing = [lo + k]; draw();
+              await sleep();
+              if (!running) return;
+            }
+          }
+          async function sort(lo, hi) {
+            if (lo >= hi || !running) return;
+            var mid = Math.floor((lo + hi) / 2);
+            await sort(lo, mid);
+            await sort(mid + 1, hi);
+            await merge(lo, mid, hi);
+          }
+          await sort(0, N - 1);
+          sorted = arr.map(function (_, i) { return i; }); comparing = []; draw();
+          document.getElementById('sortStatus').textContent = 'Completed'; running = false;
         }
         initArr(); shuffle();
-        document.getElementById('btnSort').addEventListener('click', function () { if (running) return; if (currentAlgo === 'bubble') bubbleSort(); else quickSort(); });
-        document.getElementById('btnShuffle').addEventListener('click', shuffle);
-        var btnAlgo = document.getElementById('btnAlgo');
-        btnAlgo.addEventListener('click', function () {
+        document.getElementById('btnSort').addEventListener('click', function () {
           if (running) return;
-          currentAlgo = currentAlgo === 'bubble' ? 'quick' : 'bubble';
-          this.textContent = currentAlgo === 'bubble' ? 'Bubble sort' : 'Quick sort';
-          this.classList.toggle('active');
+          var algos = { bubble: bubbleSort, quick: quickSort, selection: selectionSort, insertion: insertionSort, merge: mergeSort };
+          algos[currentAlgo]();
         });
+        document.getElementById('btnShuffle').addEventListener('click', shuffle);
+        var algoBtns = document.querySelectorAll('.algo-btn');
+        for (var i = 0; i < algoBtns.length; i++) {
+          algoBtns[i].addEventListener('click', function () {
+            if (running) return;
+            for (var j = 0; j < algoBtns.length; j++) algoBtns[j].classList.remove('active');
+            this.classList.add('active');
+            currentAlgo = this.getAttribute('data-algo');
+          });
+        }
       })();
 
       /* ===================== FISICA ===================== */
@@ -987,7 +1087,7 @@
         cv.addEventListener('click', onLifeClick);
         cv.addEventListener('touchstart', function (e) { e.preventDefault(); onLifeClick(e); }, { passive: false });
         var btnPlay = document.getElementById('btnLifePlay');
-        btnPlay.addEventListener('click', function () { running = !running; this.textContent = running ? 'Pausar' : 'Reanudar'; this.setAttribute('aria-pressed', String(!running)); if (running) requestAnimationFrame(lifeLoop); });
+        btnPlay.addEventListener('click', function () { running = !running; this.textContent = running ? 'Pause' : 'Resume'; this.setAttribute('aria-pressed', String(!running)); if (running) requestAnimationFrame(lifeLoop); });
         document.getElementById('btnLifeRand').addEventListener('click', function () { randomize(); drawLife(); });
         document.getElementById('btnLifeClear').addEventListener('click', function () { clearGrid(); drawLife(); });
         randomize(); drawLife(); requestAnimationFrame(lifeLoop);
@@ -1074,7 +1174,7 @@
           do { food = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) }; }
           while (snake.some(function (s) { return s.x === food.x && s.y === food.y; }));
         }
-        function updateScore() { scoreEl.textContent = 'Puntaje: ' + score; }
+        function updateScore() { scoreEl.textContent = 'Score: ' + score; }
         function drawSnake() {
           ctx.clearRect(0, 0, 300, 240);
           if (!snake) return;
@@ -1090,7 +1190,7 @@
             ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, 300, 240);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
             ctx.fillText('Game Over', 150, 110);
-            ctx.font = '14px sans-serif'; ctx.fillStyle = '#b0b0c8'; ctx.fillText('Presioná Iniciar', 150, 145);
+            ctx.font = '14px sans-serif'; ctx.fillStyle = '#b0b0c8'; ctx.fillText('Press Start', 150, 145);
           }
         }
         function gameLoop() {
@@ -1131,7 +1231,7 @@
         function drawDefault() {
           ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, 300, 180);
           ctx.fillStyle = '#9090aa'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
-          ctx.fillText('Arrastra una imagen aqui', 150, 90);
+          ctx.fillText('Drag an image here', 150, 90);
         }
         drawDefault();
 
@@ -1143,7 +1243,7 @@
               cv.width = 300; cv.height = 180;
               ctx.drawImage(img, 0, 0, 300, 180);
               originalData = ctx.getImageData(0, 0, 300, 180);
-              document.getElementById('imgHint').textContent = 'Imagen cargada — aplica filtros abajo';
+              document.getElementById('imgHint').textContent = 'Image loaded — apply filters below';
             };
             img.src = e.target.result;
           };
@@ -1205,7 +1305,7 @@
         var recognition = null;
 
         document.getElementById('btnSpeechListen').addEventListener('click', function () {
-          if (!SpeechRec) { status.textContent = 'API no soportada en este navegador'; return; }
+          if (!SpeechRec) { status.textContent = 'API not supported in this browser'; return; }
           recognition = new SpeechRec();
           recognition.lang = 'es-AR';
           recognition.interimResults = true;
@@ -1214,27 +1314,27 @@
             var transcript = '';
             for (var i = e.resultIndex; i < e.results.length; i++) transcript += e.results[i][0].transcript;
             textarea.value = transcript;
-            status.textContent = 'Escuchando...';
+            status.textContent = 'Listening...';
           };
-          recognition.onerror = function () { status.textContent = 'Error al acceder al microfono'; };
+          recognition.onerror = function () { status.textContent = 'Error accessing microphone'; };
           recognition.start();
-          this.textContent = 'Escuchando...';
+          this.textContent = 'Listening...';
           this.disabled = true;
-          status.textContent = 'Microfono activo — habla';
+          status.textContent = 'Microphone active — speak';
         });
 
         document.getElementById('btnSpeechSpeak').addEventListener('click', function () {
           var text = textarea.value.trim();
-          if (!text) { status.textContent = 'No hay texto para leer'; return; }
-          if (!window.speechSynthesis) { status.textContent = 'API no soportada'; return; }
+          if (!text) { status.textContent = 'No text to read'; return; }
+          if (!window.speechSynthesis) { status.textContent = 'API not supported'; return; }
           window.speechSynthesis.cancel();
           var utter = new SpeechSynthesisUtterance(text);
           utter.lang = 'es-AR';
           utter.rate = 0.9;
-          utter.onend = function () { status.textContent = 'Lectura finalizada'; };
-          utter.onerror = function () { status.textContent = 'Error al leer'; };
+          utter.onend = function () { status.textContent = 'Reading finished'; };
+          utter.onerror = function () { status.textContent = 'Error reading'; };
           window.speechSynthesis.speak(utter);
-          status.textContent = 'Leyendo...';
+          status.textContent = 'Reading...';
         });
       })();
 
@@ -1268,7 +1368,7 @@
           log.push(next.value);
           data.value = String(next.value);
           updateDisplay();
-          statusEl.textContent = 'Proxy: ' + proxyLog.slice(-2).join(', ') + ' | Total: ' + data.calls + ' llamadas';
+          statusEl.textContent = 'Proxy: ' + proxyLog.slice(-2).join(', ') + ' | Total: ' + data.calls + ' calls';
         });
 
         document.getElementById('btnGenReset').addEventListener('click', function () {
@@ -1276,7 +1376,7 @@
           log = []; proxyLog = [];
           data.calls = 0; data.value = '';
           display.textContent = '[0]';
-          statusEl.textContent = 'Reiniciado — Generator + Proxy activos';
+          statusEl.textContent = 'Reset — Generator + Proxy active';
         });
       })();
 
@@ -1289,9 +1389,9 @@
         document.getElementById('btnFetch').addEventListener('click', function () {
           if (fetching) return;
           fetching = true;
-          this.textContent = 'Cargando...';
+          this.textContent = 'Loading...';
           this.disabled = true;
-          status.textContent = 'Solicitando datos a JSONPlaceholder...';
+          status.textContent = 'Requesting data from JSONPlaceholder...';
           results.innerHTML = '';
 
           fetch('https://jsonplaceholder.typicode.com/users')
@@ -1305,16 +1405,16 @@
                 el.innerHTML = '<strong>' + u.name + '</strong> <span>' + u.email + ' | ' + u.company.name + '</span>';
                 results.appendChild(el);
               }
-              status.textContent = users.length + ' usuarios cargados via Fetch API';
+              status.textContent = users.length + ' users loaded via Fetch API';
               fetching = false;
-              this.textContent = 'Obtener usuarios';
+              this.textContent = 'Fetch Users';
               this.disabled = false;
             }.bind(this))
             .catch(function (err) {
               results.innerHTML = '<div class="fetch-error">Error: ' + err.message + '</div>';
-              status.textContent = 'Error al cargar datos';
+              status.textContent = 'Error loading data';
               fetching = false;
-              this.textContent = 'Reintentar';
+              this.textContent = 'Retry';
               this.disabled = false;
             }.bind(this));
         });

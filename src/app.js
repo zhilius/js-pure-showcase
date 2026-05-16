@@ -121,7 +121,7 @@
         analyser.fftSize = 128;
         src.connect(analyser);
         dataArr = new Uint8Array(analyser.frequencyBinCount);
-        this.textContent = 'Micrófono activo';
+        this.textContent = 'Microphone active';
         this.setAttribute('aria-pressed', 'true');
         micActive = true;
 
@@ -140,7 +140,7 @@
         }
         loop();
       } catch {
-        this.textContent = 'Sin permiso';
+        this.textContent = 'No permission';
       }
     });
 
@@ -186,7 +186,7 @@
       }
       sorted = []; comparing = [];
       draw();
-      document.getElementById('sortStatus').textContent = 'Mezclado';
+      document.getElementById('sortStatus').textContent = 'Shuffled';
     }
 
     function draw() {
@@ -217,7 +217,7 @@
       comparing = [];
       sorted = arr.map((_, i) => i);
       draw();
-      document.getElementById('sortStatus').textContent = 'Completado';
+      document.getElementById('sortStatus').textContent = 'Completed';
       running = false;
     }
 
@@ -254,7 +254,7 @@
       sorted = arr.map((_, i) => i);
       comparing = [];
       draw();
-      document.getElementById('sortStatus').textContent = 'Completado';
+      document.getElementById('sortStatus').textContent = 'Completed';
       running = false;
     }
 
@@ -465,7 +465,7 @@
     const btnPlay = document.getElementById('btnLifePlay');
     btnPlay.addEventListener('click', function () {
       running = !running;
-      this.textContent = running ? 'Pausar' : 'Reanudar';
+      this.textContent = running ? 'Pause' : 'Resume';
       this.setAttribute('aria-pressed', String(!running));
       if (running) requestAnimationFrame(lifeLoop);
     });
