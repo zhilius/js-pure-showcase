@@ -879,7 +879,13 @@
           var el = new Audio(audioUrl);
           startPlayVis(el);
           el.play();
-          el.addEventListener('ended', function () { stopPlayVis(); drawIdle(); });
+          el.addEventListener('timeupdate', function () {
+            var cur = Math.floor(el.currentTime), dur = Math.floor(el.duration);
+            var cm = String(Math.floor(cur / 60)).padStart(2, '0'), cs = String(cur % 60).padStart(2, '0');
+            var dm = String(Math.floor(dur / 60)).padStart(2, '0'), ds = String(dur % 60).padStart(2, '0');
+            recStatus.textContent = cm + ':' + cs + ' / ' + dm + ':' + ds;
+          });
+          el.addEventListener('ended', function () { stopPlayVis(); drawIdle(); recStatus.textContent = 'Done — ' + Math.floor(el.duration) + 's'; });
         });
 
         window.addEventListener('beforeunload', function () {
