@@ -1081,16 +1081,45 @@
         var drawAC = null, lastDrawSound = 0;
         var lastX = -1, lastY = -1;
 
+        /* ── cursor indicator (size circle) ── */
         var indicator = document.createElement('div');
         indicator.style.cssText = 'position:fixed;pointer-events:none;border-radius:50%;border:2px solid rgba(255,255,255,0.5);transform:translate(-50%,-50%);z-index:9999;display:none;transition:none';
         document.body.appendChild(indicator);
 
-        var toolLabel = document.createElement('div');
-        toolLabel.style.cssText = 'position:fixed;pointer-events:none;font-size:10px;font-family:sans-serif;color:#fff;background:rgba(0,0,0,0.7);padding:1px 6px;border-radius:4px;z-index:9999;display:none;white-space:nowrap;transform:translate(6px,-50%)';
-        document.body.appendChild(toolLabel);
+        /* ── tool icon ── */
+        var iconDiv = document.createElement('div');
+        iconDiv.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;display:none;width:24px;height:24px;transform:translate(8px,-50%)';
+        var iconCv = document.createElement('canvas');
+        iconCv.width = 24; iconCv.height = 24;
+        iconCv.style.cssText = 'width:24px;height:24px;filter:drop-shadow(0 0 3px rgba(0,0,0,0.8))';
+        iconDiv.appendChild(iconCv);
+        document.body.appendChild(iconDiv);
+        var ictx = iconCv.getContext('2d');
 
+        function drawToolIcon(t) {
+          ictx.clearRect(0, 0, 24, 24);
+          ictx.strokeStyle = '#fff'; ictx.fillStyle = '#fff'; ictx.lineWidth = 1.5; ictx.lineCap = 'round';
+          if (t === 'pen') {
+            ictx.beginPath(); ictx.moveTo(22, 2); ictx.lineTo(4, 20); ictx.lineTo(2, 22); ictx.closePath(); ictx.fillStyle = '#fff'; ictx.fill(); ictx.strokeStyle = '#aaa'; ictx.stroke();
+            ictx.beginPath(); ictx.moveTo(16, 8); ictx.lineTo(8, 16); ictx.strokeStyle = '#333'; ictx.lineWidth = 1; ictx.stroke();
+          } else if (t === 'eraser') {
+            ictx.fillStyle = '#ff6666'; ictx.fillRect(2, 2, 20, 20); ictx.strokeStyle = '#fff'; ictx.strokeRect(2, 2, 20, 20);
+            ictx.fillStyle = '#fff'; ictx.fillRect(8, 18, 8, 4);
+          } else if (t === 'spray') {
+            ictx.fillStyle = '#fff';
+            for (var i = 0; i < 18; i++) { ictx.fillRect(Math.random() * 22 + 1, Math.random() * 22 + 1, 1.5, 1.5); }
+          } else if (t === 'rect') {
+            ictx.strokeStyle = '#fff'; ictx.strokeRect(3, 3, 18, 18);
+          } else if (t === 'circle') {
+            ictx.beginPath(); ictx.arc(12, 12, 9, 0, Math.PI * 2); ictx.stroke();
+          } else if (t === 'line') {
+            ictx.beginPath(); ictx.moveTo(2, 22); ictx.lineTo(22, 2); ictx.stroke();
+          }
+        }
+
+        /* ── sounds per tool ── */
         function drawSound(action) {
-          if (Date.now() - lastDrawSound < 40) return;
+          if (Date.now() - lastDrawSound < 50) return;
           lastDrawSound = Date.now();
           try {
             if (!drawAC) drawAC = new (window.AudioContext || window.webkitAudioContext)();
@@ -1098,20 +1127,28 @@
             o.connect(g); g.connect(drawAC.destination);
             var t = drawAC.currentTime;
             if (action === 'pen') {
-              o.type = 'sine'; o.frequency.value = 520;
-              g.gain.setValueAtTime(0.02, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
-              o.start(t); o.stop(t + 0.03);
-            } else if (action === 'eraser') {
-              o.type = 'square'; o.frequency.value = 300;
-              g.gain.setValueAtTime(0.015, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-              o.start(t); o.stop(t + 0.04);
-            } else if (action === 'spray') {
-              o.type = 'sawtooth'; o.frequency.value = 1200;
-              g.gain.setValueAtTime(0.01, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+              o.type = 'sine'; o.frequency.setValueAtTime(300 + Math.random() * 400, t);
+              g.gain.setValueAtTime(0.02, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
               o.start(t); o.stop(t + 0.02);
-            } else if (action === 'shape') {
-              o.type = 'sine'; o.frequency.value = 660;
-              g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+            } else if (action === 'eraser') {
+              o.type = 'square'; o.frequency.setValueAtTime(120 + Math.random() * 60, t);
+              g.gain.setValueAtTime(0.012, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+              o.start(t); o.stop(t + 0.05);
+            } else if (action === 'spray') {
+              o.type = 'sawtooth'; o.frequency.setValueAtTime(1500 + Math.random() * 1000, t);
+              g.gain.setValueAtTime(0.008, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+              o.start(t); o.stop(t + 0.015);
+            } else if (action === 'rect') {
+              o.type = 'sine'; o.frequency.setValueAtTime(220, t);
+              g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+              o.start(t); o.stop(t + 0.08);
+            } else if (action === 'circle') {
+              o.type = 'sine'; o.frequency.setValueAtTime(880, t); o.frequency.linearRampToValueAtTime(660, t + 0.1);
+              g.gain.setValueAtTime(0.035, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+              o.start(t); o.stop(t + 0.12);
+            } else if (action === 'line') {
+              o.type = 'triangle'; o.frequency.setValueAtTime(250, t); o.frequency.linearRampToValueAtTime(800, t + 0.08);
+              g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
               o.start(t); o.stop(t + 0.1);
             }
           } catch (e) {}
@@ -1122,7 +1159,7 @@
           var x = e.clientX, y = e.clientY;
           if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
             indicator.style.display = 'block';
-            toolLabel.style.display = 'block';
+            iconDiv.style.display = 'block';
             var size = +document.getElementById('drawSize').value;
             if (tool === 'eraser') {
               var es = size * 3;
@@ -1140,11 +1177,11 @@
               indicator.style.background = 'transparent';
             }
             indicator.style.left = x + 'px'; indicator.style.top = y + 'px';
-            toolLabel.textContent = tool;
-            toolLabel.style.left = x + 'px'; toolLabel.style.top = (y - 14) + 'px';
+            drawToolIcon(tool);
+            iconDiv.style.left = x + 'px'; iconDiv.style.top = y + 'px';
           } else {
             indicator.style.display = 'none';
-            toolLabel.style.display = 'none';
+            iconDiv.style.display = 'none';
           }
           lastX = x; lastY = y;
         }
@@ -1154,8 +1191,7 @@
         function getPos(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
         function setupCtx() {
           var col = document.getElementById('drawColor').value;
-          ctx.strokeStyle = col;
-          ctx.fillStyle = col;
+          ctx.strokeStyle = col; ctx.fillStyle = col;
           ctx.lineWidth = +document.getElementById('drawSize').value;
           ctx.globalAlpha = +document.getElementById('drawOpacity').value;
           ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -1192,7 +1228,7 @@
             ctx.beginPath();
             if (tool === 'rect') {
               var fill = document.getElementById('drawFill').checked;
-              if (fill) { ctx.fillRect(startP.x, startP.y, p.x - startP.x, p.y - startP.y); }
+              if (fill) ctx.fillRect(startP.x, startP.y, p.x - startP.x, p.y - startP.y);
               ctx.strokeRect(startP.x, startP.y, p.x - startP.x, p.y - startP.y);
             } else if (tool === 'circle') {
               var rx = Math.abs(p.x - startP.x) / 2, ry = Math.abs(p.y - startP.y) / 2;
@@ -1208,11 +1244,11 @@
         function onUp(e) {
           if (!drawing) return;
           var p = getPos(e);
-          if (['rect', 'circle', 'line'].indexOf(tool) >= 0) { saveState(); onMove(e); drawSound('shape'); }
+          if (['rect', 'circle', 'line'].indexOf(tool) >= 0) { saveState(); onMove(e); drawSound(tool); }
           drawing = false; ctx.beginPath(); startP = null;
         }
         cv.addEventListener('mousemove', updateIndicator);
-        cv.addEventListener('mouseleave', function () { indicator.style.display = 'none'; toolLabel.style.display = 'none'; });
+        cv.addEventListener('mouseleave', function () { indicator.style.display = 'none'; iconDiv.style.display = 'none'; });
         cv.addEventListener('mousedown', onDown);
         cv.addEventListener('mousemove', onMove);
         cv.addEventListener('mouseup', onUp);
