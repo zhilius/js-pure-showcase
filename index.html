@@ -753,6 +753,7 @@
         var stream = null, mediaRecorder = null, chunks = [];
         var audioBlob = null, audioUrl = null;
         var audioCtx = null, analyser = null, dataArr = null, animId = null;
+        var playAC = null, playAnalyser = null, playDataArr = null, playAnimId = null;
         var startTime = null, timerInterval = null;
         var recording = false;
         var btnRecord = document.getElementById('btnRecord');
@@ -804,6 +805,34 @@
           if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
         }
 
+        function stopPlayVis() {
+          if (playAnimId) { cancelAnimationFrame(playAnimId); playAnimId = null; }
+          if (playAC) { playAC.close(); playAC = null; }
+          playAnalyser = null; playDataArr = null;
+        }
+
+        function startPlayVis(el) {
+          stopPlayVis();
+          stopVis(); drawIdle();
+          playAC = new (window.AudioContext || window.webkitAudioContext)();
+          var src = playAC.createMediaElementSource(el);
+          playAnalyser = playAC.createAnalyser(); playAnalyser.fftSize = 128;
+          src.connect(playAnalyser); playAnalyser.connect(playAC.destination);
+          playDataArr = new Uint8Array(playAnalyser.frequencyBinCount);
+          function loop() {
+            playAnalyser.getByteFrequencyData(playDataArr);
+            ctx.clearRect(0, 0, 300, 160);
+            var len = playDataArr.length, bw = 300 / len;
+            for (var i = 0; i < len; i++) {
+              var h = (playDataArr[i] / 255) * 140, hue = i * (240 / len);
+              ctx.fillStyle = 'hsl(' + (hue + 220) + ',70%,55%)';
+              ctx.fillRect(i * bw, 160 - h, bw - 1, h);
+            }
+            playAnimId = requestAnimationFrame(loop);
+          }
+          loop();
+        }
+
         btnRecord.addEventListener('click', async function () {
           try {
             cleanupStream();
@@ -846,11 +875,15 @@
         });
 
         btnPlay.addEventListener('click', function () {
-          if (audioUrl) { var a = new Audio(audioUrl); a.play(); }
+          if (!audioUrl) return;
+          var el = new Audio(audioUrl);
+          startPlayVis(el);
+          el.play();
+          el.addEventListener('ended', function () { stopPlayVis(); drawIdle(); });
         });
 
         window.addEventListener('beforeunload', function () {
-          cleanupStream(); stopVis(); if (timerInterval) clearInterval(timerInterval);
+          cleanupStream(); stopVis(); stopPlayVis(); if (timerInterval) clearInterval(timerInterval);
         });
       })();
 
