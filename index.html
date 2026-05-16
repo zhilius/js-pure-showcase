@@ -461,6 +461,7 @@
         </div>
         <div class="row">
           <button id="btnSort" aria-label="Start sorting bars">Sort</button>
+          <button id="btnSortStop" aria-label="Stop sorting">Stop</button>
           <button id="btnShuffle" aria-label="Shuffle bars randomly">Shuffle</button>
           <label>Speed <input type="range" id="sortSpeed" min="1" max="20" value="8" step="1" aria-label="Sorting algorithm speed"></label>
         </div>
@@ -853,6 +854,7 @@
         function getSpeed() { return 21 - +document.getElementById('sortSpeed').value; }
         function sleep() { return new Promise(function (r) { setTimeout(r, getSpeed()); }); }
         async function sortComplete() {
+          if (!running) { draw(); document.getElementById('sortStatus').textContent = 'Stopped'; return; }
           comparing = [];
           sorted = arr.map(function (_, i) { return i; });
           var w = W / N;
@@ -865,13 +867,14 @@
             await new Promise(function (r) { setTimeout(r, 10); });
           }
           draw();
-          document.getElementById('sortStatus').textContent = 'Completed';
+          if (running) document.getElementById('sortStatus').textContent = 'Completed';
           running = false;
         }
         async function bubbleSort() {
           running = true; document.getElementById('sortStatus').textContent = 'Bubble sort...';
           for (var i = 0; i < arr.length; i++) {
             for (var j = 0; j < arr.length - i - 1; j++) {
+              if (!running) return;
               comparing = [j, j + 1]; draw();
               sortSound(arr[j] > arr[j + 1] ? arr[j + 1] : arr[j]);
               await sleep();
@@ -909,6 +912,7 @@
           for (var i = 0; i < N - 1; i++) {
             var minIdx = i;
             for (var j = i + 1; j < N; j++) {
+              if (!running) return;
               comparing = [j, minIdx]; draw();
               sortSound(arr[j]);
               await sleep();
@@ -926,6 +930,7 @@
           for (var i = 1; i < N; i++) {
             var key = arr[i], j = i - 1;
             while (j >= 0 && arr[j] > key) {
+              if (!running) return;
               comparing = [j, j + 1]; draw();
               sortSound(arr[j]);
               await sleep();
@@ -972,6 +977,11 @@
           if (running) return;
           var algos = { bubble: bubbleSort, quick: quickSort, selection: selectionSort, insertion: insertionSort, merge: mergeSort };
           algos[currentAlgo]();
+        });
+        document.getElementById('btnSortStop').addEventListener('click', function () {
+          if (!running) return;
+          running = false;
+          document.getElementById('sortStatus').textContent = 'Stopping...';
         });
         document.getElementById('btnShuffle').addEventListener('click', shuffle);
         var algoBtns = document.querySelectorAll('.algo-btn');
