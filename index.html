@@ -1110,6 +1110,7 @@
         if (!cv) return;
         var ctx = cv.getContext('2d');
         var view = { x: -2.5, y: -1.2, w: 3.5, h: 2.1 };
+        var isDragging = false, dragStartX = 0, dragStartY = 0, dragStartView = null;
         function drawMandel() {
           var W = 300, H = 180, img = ctx.createImageData(W, H);
           for (var px = 0; px < W; px++) {
@@ -1125,15 +1126,17 @@
           }
           ctx.putImageData(img, 0, 0);
         }
-        function onMandelClick(e) {
-          var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
-          var px = (t.clientX - r.left) / 300, py = (t.clientY - r.top) / 180;
-          var cx = view.x + px * view.w, cy = view.y + py * view.h;
-          view.w *= 0.35; view.h *= 0.35; view.x = cx - view.w / 2; view.y = cy - view.h / 2;
-          drawMandel();
-        }
-        cv.addEventListener('click', onMandelClick);
-        cv.addEventListener('touchstart', function (e) { e.preventDefault(); onMandelClick(e); }, { passive: false });
+        function getPos(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: (t.clientX - r.left) / 300, y: (t.clientY - r.top) / 180 }; }
+        function onDown(e) { e.preventDefault(); var p = getPos(e); isDragging = true; dragStartX = p.x; dragStartY = p.y; dragStartView = { x: view.x, y: view.y, w: view.w, h: view.h }; }
+        function onMove(e) { e.preventDefault(); if (!isDragging) return; var p = getPos(e); view.x = dragStartView.x - (p.x - dragStartX) * dragStartView.w; view.y = dragStartView.y - (p.y - dragStartY) * dragStartView.h; drawMandel(); }
+        function onUp(e) { if (!isDragging) return; var p = getPos(e); var dx = p.x - dragStartX, dy = p.y - dragStartY; isDragging = false; if (Math.abs(dx) < 0.02 && Math.abs(dy) < 0.02) { var cx = dragStartView.x + dragStartX * dragStartView.w, cy = dragStartView.y + dragStartY * dragStartView.h; view.w *= 0.35; view.h *= 0.35; view.x = cx - view.w / 2; view.y = cy - view.h / 2; drawMandel(); } }
+        cv.addEventListener('mousedown', onDown);
+        cv.addEventListener('mousemove', onMove);
+        cv.addEventListener('mouseup', onUp);
+        cv.addEventListener('mouseleave', function () { isDragging = false; });
+        cv.addEventListener('touchstart', onDown, { passive: false });
+        cv.addEventListener('touchmove', onMove, { passive: false });
+        cv.addEventListener('touchend', onUp);
         document.getElementById('btnReset').addEventListener('click', function () { view = { x: -2.5, y: -1.2, w: 3.5, h: 2.1 }; drawMandel(); });
         drawMandel();
       })();
