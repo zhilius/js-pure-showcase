@@ -580,10 +580,10 @@
         <h2 id="life-heading"><a href="demos/life.html" class="demo-link">Cellular Automaton — Conway's Game of Life</a></h2>
         <canvas id="cLife" width="620" height="140" style="aspect-ratio:620/140" role="img" aria-label="Conway's Game of Life in execution"></canvas>
         <div class="row">
-          <button id="btnLifePlay" aria-label="Pause or resume the simulation" aria-pressed="false">Pause</button>
+          <button id="btnLifePlay" aria-label="Start or pause the simulation" aria-pressed="false">Start</button>
           <button id="btnLifeRand" aria-label="Randomize the Game of Life board">Randomize</button>
           <button id="btnLifeClear" aria-label="Clear the board">Clear</button>
-          <span class="hint">Click on the canvas to draw living cells</span>
+          <span class="hint">Click or drag to draw cells, then press Start</span>
         </div>
       </article>
 
@@ -1284,27 +1284,51 @@
         var cv = c.cv, ctx = c.ctx;
         var CELL = 7, COLS = Math.floor(620 / CELL), ROWS = Math.floor(140 / CELL);
         var grid = Array.from({ length: ROWS }, function () { return new Uint8Array(COLS); });
-        var running = true, animId = null, lastTime = 0;
+        var running = false, animId = null, lastTime = 0, painting = false;
+
         function randomize() { grid = Array.from({ length: ROWS }, function () { return Uint8Array.from({ length: COLS }, function () { return Math.random() < 0.3 ? 1 : 0; }); }); }
         function clearGrid() { grid = Array.from({ length: ROWS }, function () { return new Uint8Array(COLS); }); }
         function nextGen() {
           var ng = Array.from({ length: ROWS }, function () { return new Uint8Array(COLS); });
-          for (var r = 0; r < ROWS; r++) { for (var c = 0; c < COLS; c++) { var n = 0; for (var dr = -1; dr <= 1; dr++) { for (var dc = -1; dc <= 1; dc++) { if (dr === 0 && dc === 0) continue; n += grid[(r + dr + ROWS) % ROWS][(c + dc + COLS) % COLS]; } } ng[r][c] = (grid[r][c] ? n === 2 || n === 3 : n === 3) ? 1 : 0; } }
+          for (var r = 0; r < ROWS; r++) {
+            for (var c = 0; c < COLS; c++) {
+              var n = 0;
+              for (var dr = -1; dr <= 1; dr++) {
+                for (var dc = -1; dc <= 1; dc++) {
+                  if (dr === 0 && dc === 0) continue;
+                  var nr = r + dr, nc = c + dc;
+                  if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) n += grid[nr][nc];
+                }
+              }
+              ng[r][c] = (grid[r][c] ? n === 2 || n === 3 : n === 3) ? 1 : 0;
+            }
+          }
           grid = ng;
         }
         function drawLife() {
           ctx.clearRect(0, 0, 620, 140);
-          for (var r = 0; r < ROWS; r++) { for (var c = 0; c < COLS; c++) { if (grid[r][c]) { ctx.fillStyle = PURPLE; ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2); } } }
+          for (var r = 0; r < ROWS; r++) {
+            for (var c = 0; c < COLS; c++) {
+              if (grid[r][c]) { ctx.fillStyle = PURPLE; ctx.fillRect(c * CELL + 1, r * CELL + 1, CELL - 2, CELL - 2); }
+            }
+          }
         }
         function lifeLoop(ts) { if (ts - lastTime > 120) { nextGen(); drawLife(); lastTime = ts; } if (running) animId = requestAnimationFrame(lifeLoop); }
-        function onLifeClick(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e, col = Math.floor((t.clientX - r.left) / CELL), row = Math.floor((t.clientY - r.top) / CELL); if (row >= 0 && row < ROWS && col >= 0 && col < COLS) { grid[row][col] = grid[row][col] ? 0 : 1; drawLife(); } }
-        cv.addEventListener('click', onLifeClick);
-        cv.addEventListener('touchstart', function (e) { e.preventDefault(); onLifeClick(e); }, { passive: false });
+        function getCell(e) { var r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { row: Math.floor((t.clientY - r.top) / CELL), col: Math.floor((t.clientX - r.left) / CELL) }; }
+        function paintCell(e) { if (running) return; var cell = getCell(e); if (cell.row >= 0 && cell.row < ROWS && cell.col >= 0 && cell.col < COLS) { grid[cell.row][cell.col] = 1; drawLife(); } }
+        function toggleCell(e) { if (running) return; var cell = getCell(e); if (cell.row >= 0 && cell.row < ROWS && cell.col >= 0 && cell.col < COLS) { grid[cell.row][cell.col] = grid[cell.row][cell.col] ? 0 : 1; drawLife(); } }
+        cv.addEventListener('click', toggleCell);
+        cv.addEventListener('mousedown', function (e) { painting = true; paintCell(e); });
+        cv.addEventListener('mousemove', function (e) { if (painting) paintCell(e); });
+        cv.addEventListener('mouseup', function () { painting = false; });
+        cv.addEventListener('mouseleave', function () { painting = false; });
+        cv.addEventListener('touchstart', function (e) { e.preventDefault(); toggleCell(e); }, { passive: false });
+        cv.addEventListener('touchmove', function (e) { e.preventDefault(); paintCell(e); }, { passive: false });
         var btnPlay = document.getElementById('btnLifePlay');
-        btnPlay.addEventListener('click', function () { running = !running; this.textContent = running ? 'Pause' : 'Resume'; this.setAttribute('aria-pressed', String(!running)); if (running) requestAnimationFrame(lifeLoop); });
-        document.getElementById('btnLifeRand').addEventListener('click', function () { randomize(); drawLife(); });
-        document.getElementById('btnLifeClear').addEventListener('click', function () { clearGrid(); drawLife(); });
-        randomize(); drawLife(); requestAnimationFrame(lifeLoop);
+        btnPlay.addEventListener('click', function () { running = !running; this.textContent = running ? 'Pause' : 'Start'; this.setAttribute('aria-pressed', String(!running)); if (running) animId = requestAnimationFrame(lifeLoop); });
+        document.getElementById('btnLifeRand').addEventListener('click', function () { if (running) { running = false; btnPlay.textContent = 'Start'; btnPlay.setAttribute('aria-pressed', 'false'); } randomize(); drawLife(); });
+        document.getElementById('btnLifeClear').addEventListener('click', function () { if (running) { running = false; btnPlay.textContent = 'Start'; btnPlay.setAttribute('aria-pressed', 'false'); } clearGrid(); drawLife(); });
+        drawLife();
       })();
 
       /* ===================== MATRIX RAIN ===================== */
