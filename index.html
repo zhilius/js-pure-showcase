@@ -1083,7 +1083,7 @@
           } catch (e) {}
         }
         function addBall() { balls.push({ x: Math.random() * 280 + 10, y: 10, vx: (Math.random() - 0.5) * 4, vy: 0, r: Math.random() * 10 + 6, c: COLORS[balls.length % COLORS.length], e: 0.7 + Math.random() * 0.2, lastBounce: 0 }); }
-        for (var i = 0; i < 5; i++) addBall();
+        /* start empty */
         document.getElementById('btnBall').addEventListener('click', addBall);
         document.getElementById('btnClear').addEventListener('click', function () { balls.length = 0; });
         var gravSlider = document.getElementById('gravSlider');
